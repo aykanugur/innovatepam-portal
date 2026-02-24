@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-02-24
 
 ## Active Technologies
 
+- TypeScript 5.4+ / Node.js 20.9+ + Next.js 16 (App Router), React 19, Auth.js v5, Prisma v7.4.1 (`@prisma/adapter-pg`), Zod 3, Tailwind v4, shadcn/ui, Vitest 2, Playwright 1.50, `@upstash/ratelimit`, `@vercel/blob` (003-evaluation-qa)
+- PostgreSQL via Neon — `DATABASE_URL` (pooled, PgBouncer) + `DIRECT_URL` (non-pooled for Prisma CLI migrations) (003-evaluation-qa)
+
 - TypeScript 5.x — Node.js 22 + Next.js 16 (App Router), React 19, Auth.js v5, Prisma v7, Zod 3, Radix UI, Tailwind v4, `@upstash/ratelimit`, `@upstash/redis`, `@vercel/blob` (new) (002-idea-submission)
 - PostgreSQL via Neon (Prisma v7 + `@prisma/adapter-pg`); Vercel Blob for file attachments (002-idea-submission)
 
@@ -30,10 +33,10 @@ TypeScript 5.4+ / Node.js 20.9+ (Next.js 16 requirement): Follow standard conven
 
 ## Recent Changes
 
+- 003-evaluation-qa: Added TypeScript 5.4+ / Node.js 20.9+ + Next.js 16 (App Router), React 19, Auth.js v5, Prisma v7.4.1 (`@prisma/adapter-pg`), Zod 3, Tailwind v4, shadcn/ui, Vitest 2, Playwright 1.50, `@upstash/ratelimit`, `@vercel/blob`
+
 - 002-idea-submission: Added TypeScript 5.x — Node.js 22 + Next.js 16 (App Router), React 19, Auth.js v5, Prisma v7, Zod 3, Radix UI, Tailwind v4, `@upstash/ratelimit`, `@upstash/redis`, `@vercel/blob` (new)
 - 002-idea-submission: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-
-- 001-auth-rbac: Added TypeScript 5.4+ / Node.js 24.13.1 + Next.js 16.1.6, `next-auth@beta` (Auth.js v5), `bcryptjs`, `@resend/node`, `@upstash/ratelimit`, `@upstash/redis`, Prisma 7.4.1, shadcn/ui canary, Zod, Tailwind CSS v4
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
