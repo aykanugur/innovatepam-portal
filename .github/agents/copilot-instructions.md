@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-02-24
 
 ## Active Technologies
 
+- TypeScript 5.4+ / Node.js 24.13.1 + Next.js 16.1.6, `next-auth@beta` (Auth.js v5), `bcryptjs`, `@resend/node`, `@upstash/ratelimit`, `@upstash/redis`, Prisma 7.4.1, shadcn/ui canary, Zod, Tailwind CSS v4 (001-auth-rbac)
+- Neon PostgreSQL via `@prisma/adapter-pg` (existing from 001-foundation); two new nullable fields added to `User` model via migration (001-auth-rbac)
+
 - TypeScript 5.4+ / Node.js 20.9+ (Next.js 16 requirement) + Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui, Prisma v7.4.1, Zod, Vitest v4, Playwrigh (001-foundation)
 
 ## Project Structure
@@ -23,6 +26,8 @@ npm test && npm run lint
 TypeScript 5.4+ / Node.js 20.9+ (Next.js 16 requirement): Follow standard conventions
 
 ## Recent Changes
+
+- 001-auth-rbac: Added TypeScript 5.4+ / Node.js 24.13.1 + Next.js 16.1.6, `next-auth@beta` (Auth.js v5), `bcryptjs`, `@resend/node`, `@upstash/ratelimit`, `@upstash/redis`, Prisma 7.4.1, shadcn/ui canary, Zod, Tailwind CSS v4
 
 - 001-foundation: Added TypeScript 5.4+ / Node.js 20.9+ (Next.js 16 requirement) + Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui, Prisma v7.4.1, Zod, Vitest v4, Playwrigh
 
