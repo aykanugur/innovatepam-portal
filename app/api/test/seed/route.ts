@@ -10,9 +10,7 @@
 
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-
-// Shared test password for E2E seed users — not used in production
-const E2E_PASSWORD_HASH = '$2b$12$OJ6aXMbEn9qLVOdMjHijZ.LdPfJBK0V9Pb8BQMSH8LdMYZ.EoRqPe' // bcrypt of 'E2eTestPass1'
+import { hashPassword } from '@/lib/auth-utils'
 
 type TestSeedResult = {
   adminEmail: string
@@ -23,7 +21,8 @@ type TestSeedResult = {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  if (process.env.NODE_ENV !== 'test') {
+  const isTestEnv = process.env.NODE_ENV === 'test' || process.env.E2E_ENABLED === 'true'
+  if (!isTestEnv) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
@@ -38,13 +37,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   const plainPassword = 'E2eTestPass1'
 
   try {
+    // Hash the password at runtime so it's always correct
+    const passwordHash = await hashPassword(plainPassword)
+
     // Upsert admin user
     const admin = await db.user.upsert({
       where: { email: adminEmail },
-      update: { role: 'ADMIN' },
+      update: { role: 'ADMIN', passwordHash },
       create: {
         email: adminEmail,
-        passwordHash: E2E_PASSWORD_HASH,
+        passwordHash,
         displayName: `E2E Admin ${runId}`,
         role: 'ADMIN',
         emailVerified: true,
@@ -54,10 +56,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Upsert submitter user
     const submitter = await db.user.upsert({
       where: { email: submitterEmail },
-      update: { role: 'SUBMITTER' },
+      update: { role: 'SUBMITTER', passwordHash },
       create: {
         email: submitterEmail,
-        passwordHash: E2E_PASSWORD_HASH,
+        passwordHash,
         displayName: `E2E Submitter ${runId}`,
         role: 'SUBMITTER',
         emailVerified: true,

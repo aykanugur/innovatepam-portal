@@ -51,7 +51,7 @@ test.describe('US-016 AC-2 path (c) — Review Workflow', () => {
     await page.getByRole('button', { name: /^accept$/i }).click()
 
     // Decision card should appear
-    await expect(page.getByText(/accepted/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/accepted/i).first()).toBeVisible({ timeout: 10_000 })
 
     // ── Submitter views the decision ────────────────────────────────────────
     await logout(page)
@@ -61,6 +61,6 @@ test.describe('US-016 AC-2 path (c) — Review Workflow', () => {
     await page.goto(`/ideas/${ideaId}`)
 
     // Decision badge visible on submitter's idea view (FR-007)
-    await expect(page.getByText(/accepted/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/accepted/i).first()).toBeVisible({ timeout: 10_000 })
   })
 })

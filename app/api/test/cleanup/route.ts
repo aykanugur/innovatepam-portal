@@ -11,7 +11,8 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 export async function POST(req: Request): Promise<NextResponse> {
-  if (process.env.NODE_ENV !== 'test') {
+  const isTestEnv = process.env.NODE_ENV === 'test' || process.env.E2E_ENABLED === 'true'
+  if (!isTestEnv) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
@@ -21,16 +22,47 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'runId is required' }, { status: 400 })
   }
 
-  const prefix = `[test:${runId}]`
   const emailSuffix = `${runId}@test.local`
 
   try {
-    // Delete ideas by title prefix (cascade deletes IdeaReview + AuditLog via DB relations)
+    // Delete in dependency order to satisfy FK constraints.
+    // 1. Find all test users (we need their IDs for AuditLog cleanup)
+    const testUsers = await db.user.findMany({
+      where: { email: { endsWith: emailSuffix } },
+      select: { id: true },
+    })
+    const testUserIds = testUsers.map((u) => u.id)
+
+    // 2. Delete AuditLog rows created by test users
+    if (testUserIds.length > 0) {
+      await db.auditLog.deleteMany({ where: { actorId: { in: testUserIds } } })
+    }
+
+    // 3. Delete ideas authored by test users (covers dynamically-created ideas too)
+    //    IdeaReview rows are deleted first due to cascade or we delete them manually
+    if (testUserIds.length > 0) {
+      const testIdeas = await db.idea.findMany({
+        where: { authorId: { in: testUserIds } },
+        select: { id: true },
+      })
+      const testIdeaIds = testIdeas.map((i) => i.id)
+
+      // Delete IdeaReview for test ideas
+      if (testIdeaIds.length > 0) {
+        await db.ideaReview.deleteMany({ where: { ideaId: { in: testIdeaIds } } })
+        // Also delete AuditLog referencing test ideas (reviewer actions)
+        await db.auditLog.deleteMany({ where: { targetId: { in: testIdeaIds } } })
+      }
+
+      await db.idea.deleteMany({ where: { authorId: { in: testUserIds } } })
+    }
+
+    // 4. Also delete seed ideas by title prefix (in case author relation is different)
     await db.idea.deleteMany({
-      where: { title: { startsWith: prefix } },
+      where: { title: { startsWith: `[test:${runId}]` } },
     })
 
-    // Delete test users by email suffix
+    // 5. Delete test users
     await db.user.deleteMany({
       where: { email: { endsWith: emailSuffix } },
     })

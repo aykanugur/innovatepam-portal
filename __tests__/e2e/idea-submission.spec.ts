@@ -25,6 +25,7 @@ test.describe('US-016 AC-2 path (b) — Idea Submission', () => {
     await loginAs(page, { email: seed.submitterEmail, password: seed.submitterPassword })
 
     await page.goto('/ideas/new')
+    await page.waitForLoadState('networkidle')
 
     // Fill title
     await page.fill('#title', '[test] E2E submitted idea title')
@@ -35,16 +36,19 @@ test.describe('US-016 AC-2 path (b) — Idea Submission', () => {
     // Select category
     await page.selectOption('#category', 'process-improvement')
 
-    // Submit
-    await page.click('button[type="submit"]')
+    // Submit — use text selector to avoid clicking the nav's "Sign out" button
+    await page.click('button[type="submit"]:has-text("Submit Idea")')
 
     // Should redirect to /ideas/<id>
     await expect(page).toHaveURL(/\/ideas\/[a-z0-9]+$/, { timeout: 10_000 })
+    await page.waitForLoadState('networkidle')
 
-    // Title visible
-    await expect(page.getByText('[test] E2E submitted idea title')).toBeVisible()
+    // Title visible (use heading role to avoid matching Next.js route announcer)
+    await expect(
+      page.getByRole('heading', { name: '[test] E2E submitted idea title' })
+    ).toBeVisible({ timeout: 10_000 })
 
-    // Status badge shows "Submitted"
-    await expect(page.getByText('Submitted')).toBeVisible()
+    // Status badge shows "Submitted" — use aria-label to be specific
+    await expect(page.getByLabel('Status: Submitted')).toBeVisible({ timeout: 5_000 })
   })
 })

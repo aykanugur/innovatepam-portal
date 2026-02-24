@@ -104,9 +104,9 @@
 
 **Purpose**: Write all four E2E spec files before the full feature is wired. Specs should fail or be skipped when the features they test are not yet complete. Running `npm run test:e2e` at the end of this phase should show failures/skips — not passes — confirming the RED state.
 
-- [ ] T026 Create `__tests__/e2e/auth.spec.ts` — **Scope: login path only** (registration E2E is out of scope for this epic; note with `// TODO(US-016): registration E2E deferred — login-only path covers the auth gate` inline comment); navigate to `/login` → fill credentials → submit → assert redirect to `/ideas` → assert nav shows user displayName; assert `/admin` shows redirect when logged in as SUBMITTER — US-016 AC-2 path (a)
-- [ ] T027 [P] Create `__tests__/e2e/idea-submission.spec.ts` — E2E path (b): login as SUBMITTER → navigate to `/ideas/new` → fill title, description, category → submit → assert redirect to `/ideas/<id>` → assert title and "Submitted" badge visible — US-016 AC-2 path (b)
-- [ ] T028 Create `__tests__/e2e/review-workflow.spec.ts` — E2E path (c): seed idea (SUBMITTER) → login as ADMIN → open `/admin/review/<id>` → "Start Review" → assert status badge becomes "Under Review" → type 15-char comment → "Accept" → assert decision card shows "ACCEPTED", reviewer name, comment; then login as SUBMITTER → open `/ideas/<id>` → assert decision badge and reviewer info visible (validates FR-007 via T019) — US-016 AC-2 path (c)
+- [x] T026 Create `__tests__/e2e/auth.spec.ts` — **Scope: login path only** (registration E2E is out of scope for this epic; note with `// TODO(US-016): registration E2E deferred — login-only path covers the auth gate` inline comment); navigate to `/login` → fill credentials → submit → assert redirect to `/ideas` → assert nav shows user displayName; assert `/admin` shows redirect when logged in as SUBMITTER — US-016 AC-2 path (a)
+- [x] T027 [P] Create `__tests__/e2e/idea-submission.spec.ts` — E2E path (b): login as SUBMITTER → navigate to `/ideas/new` → fill title, description, category → submit → assert redirect to `/ideas/<id>` → assert title and "Submitted" badge visible — US-016 AC-2 path (b)
+- [x] T028 Create `__tests__/e2e/review-workflow.spec.ts` — E2E path (c): seed idea (SUBMITTER) → login as ADMIN → open `/admin/review/<id>` → "Start Review" → assert status badge becomes "Under Review" → type 15-char comment → "Accept" → assert decision card shows "ACCEPTED", reviewer name, comment; then login as SUBMITTER → open `/ideas/<id>` → assert decision badge and reviewer info visible (validates FR-007 via T019) — US-016 AC-2 path (c)
 - [x] T029 [P] Create `__tests__/e2e/rbac.spec.ts` — E2E path (d): login as SUBMITTER → attempt to navigate to `/admin` → assert redirect; attempt POST to `/admin/review/<id>` via fetch → assert 401 or 403; verify `/settings` IS accessible to SUBMITTER — US-016 AC-2 path (d)
 
 ---
@@ -157,8 +157,8 @@
 - [x] T042 [P] Run `npm run type-check` — 0 errors; fix any TypeScript errors introduced by nullable `IdeaReview.decision` / `IdeaReview.comment` fields
 - [x] T043 [P] Run `npm run lint` — 0 warnings (`--max-warnings 0`); fix all lint violations
 - [x] T044 Run `npm run build` — must pass with 0 errors
-- [ ] T045 Run `npm run test:e2e` — all four critical-path E2E specs must pass (FR-026, US-016 AC-2); fix any failures before GA
-- [ ] T046 Manual smoke test on Vercel preview URL after branch deploy: (a) start review → finalize → admin dashboard counts update; (b) submitter sees decision on `/ideas/<id>`; (c) `/settings` loads for SUBMITTER; (d) review page and dashboard respond within 2 seconds on a standard connection (SC-001 performance check)
+- [x] T045 Run `npm run test:e2e` — all four critical-path E2E specs must pass (FR-026, US-016 AC-2); fix any failures before GA
+- [x] T046 Manual smoke test on Vercel preview URL after branch deploy: (a) start review → finalize → admin dashboard counts update; (b) submitter sees decision on `/ideas/<id>`; (c) `/settings` loads for SUBMITTER; (d) review page and dashboard respond within 2 seconds on a standard connection (SC-001 performance check)
 
 ---
 
