@@ -87,7 +87,7 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 - What happens when `SUPERADMIN_EMAIL` is set but no matching User exists in the database? → Seed script logs a warning and exits cleanly without crashing.
 - What happens when a user's role is updated while they have an active session? → The new role takes effect on the next server request; no re-login required.
 - What happens when an ADMIN attempts to promote a user to SUPERADMIN? → The action is rejected: "Only SUPERADMIN can assign the SUPERADMIN role."
-- What happens when a brute-force login is attempted? → After 5 failed attempts within a 15-minute window per IP, further login attempts are blocked for 15 minutes. The user sees: "Too many login attempts. Please try again in 15 minutes."
+- What happens when a brute-force login is attempted? → After 5 failed attempts within a 15-minute window **per email address** (normalized to lowercase), further login attempts for that email are blocked for 15 minutes. The user sees: "Too many login attempts. Please try again in 15 minutes."
 - What happens when the Resend email API fails during registration? → Registration succeeds; a user-visible banner warns the verification email could not be sent.
 - What happens when a non-`@epam.com` email is submitted at `/register`? → The form rejects it with: "Only @epam.com addresses are permitted." before the request reaches the server.
 - What happens when a user leaves Display Name blank at registration? → The system automatically extracts the local part of their email address (before `@`) and stores it as their display name.
@@ -108,15 +108,16 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 - **FR-008**: Login MUST reject unverified accounts (when the verification flag is enabled) with a message distinct from the invalid-credentials error.
 - **FR-009**: Login failure messages MUST NOT reveal which field (email or password) is incorrect.
 - **FR-010**: Users MUST be able to log out and have their session fully destroyed; subsequent authenticated requests MUST be rejected.
-- **FR-011**: System MUST redirect all unauthenticated requests to protected routes to `/login` with the originally requested URL preserved as `callbackUrl`.
+- **FR-011**: System MUST redirect all unauthenticated requests to protected routes to `/login` with the originally requested URL preserved as `callbackUrl`. The `callbackUrl` value MUST be validated as a same-origin relative path; absolute URLs and cross-origin values MUST be rejected and fall back to `/dashboard` to prevent open redirect attacks.
 - **FR-012**: System MUST return a 403 response to any authenticated user with insufficient role attempting to access an admin-only route.
 - **FR-013**: After successful login, users MUST be redirected to the URL stored in `callbackUrl` (or `/dashboard` if none).
 - **FR-014**: System MUST automatically promote the account matching `SUPERADMIN_EMAIL` to the `SUPERADMIN` role when the seed script is run.
 - **FR-015**: Superadmins MUST be able to view all users and change their roles via `/admin/users` (when `FEATURE_USER_MANAGEMENT_ENABLED=true`).
 - **FR-016**: System MUST prevent any user from changing their own role.
 - **FR-017**: Only `SUPERADMIN` role holders MUST be able to assign or remove the `SUPERADMIN` role.
-- **FR-018**: System MUST block login attempts from an IP address for 15 minutes after 5 consecutive failed attempts within a 15-minute window, returning a clear message: "Too many login attempts. Please try again in 15 minutes." Cooldown resets automatically — no admin action required.
+- **FR-018**: System MUST block login attempts **per email address** (normalized to lowercase) for 15 minutes after 5 consecutive failed attempts within a 15-minute window, returning a clear message: "Too many login attempts. Please try again in 15 minutes." Cooldown resets automatically — no admin action required. The rate-limit key is the normalized email, NOT the IP address.
 - **FR-019**: System MUST emit a structured server-side log entry (to stdout) for each of the following auth events: login success, login failure, logout, and role change. Each entry MUST include: event type, timestamp, and the affected user's email (no passwords or tokens logged).
+- **FR-020**: Users with the `ADMIN` role MUST have access to `/admin` (idea review dashboard) to view all submitted ideas and update their status. ADMIN role holders MUST NOT be granted access to `/admin/users` or any user role management endpoint — those remain restricted to `SUPERADMIN` only.
 
 ### Key Entities
 
@@ -147,12 +148,16 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 - Q: Is Display Name required at registration, or optional? → A: Optional — if left blank, the system automatically derives it from the local part of the email address (before `@`) and saves it as the default display name.
 - Q: What is the rate-limit lockout duration after 5 failed login attempts? → A: 15-minute automatic cooldown — no admin unlock needed; the block lifts automatically after 15 minutes.
 - Q: Should auth events (login, logout, role changes) be logged, and if so where? → A: Server-side structured logs to stdout only — no persistent audit table; covers login success/failure, logout, and role changes with timestamp and email.
+- Q: Should login rate-limiting use IP address or email address as the rate-limit key? → A: Per email address (normalized to lowercase) — corrects FR-018 "per IP" text; email-keyed prevents per-account brute force without relying on IP headers that can be spoofed or shared via corporate NAT.
+- Q: What can an ADMIN (non-SUPERADMIN) do in the admin section? → A: ADMIN can access `/admin` (idea review dashboard) and manage idea statuses; ADMIN is blocked from `/admin/users` and cannot perform any user role management (FR-020).
+- Q: Does the verification email link point to the page route or the API route directly? → A: Page route — the email link targets `/verify-email?token=<token>`; the RSC page performs server-side validation and renders appropriate UI state (success / expired / already-verified).
+- Q: Should `callbackUrl` be validated to prevent open redirect attacks? → A: Yes — accept same-origin relative paths only; reject absolute or cross-origin values and fall back to `/dashboard` (FR-011 updated).
 
 ---
 
 ## Assumptions
 
-- Email verification link format: `/verify-email?token=<hex-token>`
+- Email verification link format: `/verify-email?token=<hex-token>` — the link targets the **page route** (`app/(auth)/verify-email/page.tsx`), not the API route directly. The RSC page performs server-side token validation and renders the appropriate UI state (success / expired / already-used).
 - Verification tokens are stored as plain hex strings in the database (not JWTs); the secrecy of the token value provides security.
 - `FEATURE_EMAIL_VERIFICATION_ENABLED=false` is the default for local development and alpha; `true` is the default for production.
 - Sessions are non-persistent (session cookies only — no `Max-Age` or `Expires` attribute); they expire after 1 hour of inactivity or when the browser is closed.
