@@ -11,7 +11,7 @@
     "lint": "eslint --max-warnings 0 'app/**/*.{ts,tsx}' 'lib/**/*.{ts,tsx}' 'components/**/*.{ts,tsx}' 'constants/**/*.ts'",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:unit": "vitest run __tests__/unit",
+    "test:unit": "vitest run tests/unit",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",

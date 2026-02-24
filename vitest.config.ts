@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: ['./vitest.setup.ts'],
       env,
       // Exclude Playwright E2E specs — those are run by `playwright test`, not vitest
-      exclude: ['**/node_modules/**', '**/dist/**', '**/__tests__/e2e/**'],
+      exclude: ['**/node_modules/**', '**/dist/**', '**/tests/e2e/**'],
       // Integration tests hit the live Neon DB — cold connection can be slow
       testTimeout: 15000,
       server: {
