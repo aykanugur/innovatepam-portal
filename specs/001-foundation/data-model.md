@@ -37,9 +37,9 @@ datasource db {
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum Role {
-  SUBMITTER    // standard employee (default)
-  ADMIN        // can review ideas
-  SUPERADMIN   // full platform access; auto-promoted via SUPERADMIN_EMAIL seed
+  SUBMITTER    // default role on creation; displayed as "Submitter" in UI
+  ADMIN        // can review ideas; displayed as "Admin" in UI
+  SUPERADMIN   // full platform access; displayed as "Super Admin" in UI; auto-promoted via SUPERADMIN_EMAIL seed
 }
 
 enum IdeaStatus {
@@ -52,6 +52,12 @@ enum IdeaStatus {
 enum IdeaVisibility {
   PUBLIC   // visible to all authenticated users
   PRIVATE  // visible only to author and admins
+}
+
+enum ReviewDecision {
+  ACCEPTED  // admin approved the idea
+  REJECTED  // admin rejected the idea
+  // Note: SUBMITTED and UNDER_REVIEW are IdeaStatus values only — never valid on a review record
 }
 
 // ─── Models ───────────────────────────────────────────────────────────────────
@@ -89,8 +95,8 @@ model Idea {
 }
 
 model IdeaReview {
-  id         String     @id @default(cuid())
-  decision   IdeaStatus // ACCEPTED or REJECTED only
+  id         String         @id @default(cuid())
+  decision   ReviewDecision // ACCEPTED or REJECTED — enforced at DB level
   comment    String
 
   ideaId     String  @unique  // one review per idea (FR-008)
@@ -174,7 +180,7 @@ export const ideaCategorySchema = z.enum(IDEA_CATEGORIES)
 | Field | Type | Constraints | Notes |
 |---|---|---|---|
 | `id` | `String` | PK, `cuid()` | |
-| `decision` | `IdeaStatus` | NOT NULL | Only `ACCEPTED` or `REJECTED` valid (app-layer Zod) |
+| `decision` | `ReviewDecision` | NOT NULL | DB enum enforces `ACCEPTED`/`REJECTED` only — no app-layer guard needed |
 | `comment` | `String` | NOT NULL | Mandatory reviewer comment |
 | `ideaId` | `String` | `@unique`, FK → `Idea.id` | Enforces one-review-per-idea (FR-008) |
 | `reviewerId` | `String` | FK → `User.id` | Must have `role = ADMIN | SUPERADMIN` (enforced app-layer) |

@@ -22,8 +22,8 @@ A developer joining the project clones the repository and is immediately product
    **Then** it completes with zero errors and zero warnings.
 
 2. **Given** the project has been set up,  
-   **When** a code quality check is run,  
-   **Then** it reports zero errors and zero warnings.
+   **When** `npm run lint` (ESLint) and `npm run type-check` (`tsc --noEmit`) are run,  
+   **Then** both report zero errors and zero warnings.
 
 3. **Given** the project has been set up,  
    **When** the home page is opened in a browser,  
@@ -95,6 +95,7 @@ A developer can onboard to the project within minutes and knows exactly which en
 
 - A developer sets up the project but omits a required environment variable: the application fails to start with a clear error identifying the missing variable — not a generic crash.
 - A design system component conflicts with the CSS framework version: the conflict is resolved before progressing; no `@ts-ignore` or style overrides are used as workarounds.
+- When `PORTAL_ENABLED=false` and any route is requested: `proxy.ts` intercepts the request before the Next.js router, returns HTTP **503**, and renders a standalone HTML maintenance page — no redirect, no 200, no JSON body.
 - The database connection string points to the wrong database: the migration fails with a clear error message; no partial schema is applied.
 - The local secrets file is accidentally staged for commit: the pre-commit hook or version control ignore pattern prevents it from being included.
 - The migration is run twice on the same database: the operation is idempotent and produces no errors or duplicate tables.
@@ -106,12 +107,12 @@ A developer can onboard to the project within minutes and knows exactly which en
 
 ### Functional Requirements
 
-- **FR-001**: The project MUST produce a clean build with zero errors and zero warnings after initial setup.
-- **FR-002**: The project MUST pass all code-quality checks with zero errors and zero warnings after initial setup.
+- **FR-001**: The project MUST produce a clean build (`npm run build`) with zero TypeScript errors and zero ESLint warnings in project-authored code (`app/`, `lib/`, `components/`, `constants/`). Third-party package build notices originating from `node_modules` are excluded from this gate.
+- **FR-002**: The project MUST pass two code-quality checks — `npm run lint` (ESLint) and `npm run type-check` (`tsc --noEmit`) — each reporting zero errors and zero warnings after initial setup. Prettier formatting is enforced by the pre-commit hook (`lint-staged`), not a separate CI check.
 - **FR-003**: The project MUST include a design system component library configured and ready for use, with at least one component rendered on the home page.
 - **FR-004**: The project MUST enforce consistent code formatting automatically on every commit via a pre-commit hook — no manual formatting step should be required.
 - **FR-005**: The data schema MUST define `User`, `Idea`, `IdeaReview`, and `VerificationToken` as first-class entities. All four tables are created in the initial migration so that EPIC-02 requires no additional schema migration.
-- **FR-006**: The `User` entity MUST support three distinct roles: standard employee, administrator, and super-administrator — defaulting to standard employee on creation.
+- **FR-006**: The `User` entity MUST support three distinct roles: `SUBMITTER` (default on creation), `ADMIN`, and `SUPERADMIN`. In user-facing UI prose these are displayed as "Submitter", "Admin", and "Super Admin" respectively.
 - **FR-007**: The `Idea` entity MUST track a lifecycle status (submitted → under review → accepted / rejected) and a visibility setting (public or private).
 - **FR-008**: The `IdeaReview` entity MUST enforce a one-to-one relationship with its parent idea (one review per idea maximum).
 - **FR-009**: The database schema MUST be applied via a repeatable, version-controlled migration that can be run in any environment from a single command.
@@ -133,14 +134,14 @@ A developer can onboard to the project within minutes and knows exactly which en
 - **FR-012**: The application MUST be deployed to a production hosting platform reachable via a public URL, with all required environment variables configured in that platform.
 - **FR-013**: The deployment pipeline MUST trigger automatically on every push to the main branch.
 - **FR-014**: The `User.displayName` field MUST be NOT NULL. At the time a user record is created, `displayName` MUST be automatically set to the local-part of the user's email address (all characters before `@`). It MAY be updated later via profile settings.
-- **FR-015**: When `PORTAL_ENABLED=false`, the application MUST return a maintenance response for all routes — no authenticated or unauthenticated page is accessible.
+- **FR-015**: When `PORTAL_ENABLED=false`, the application MUST intercept all routes (including API routes) in `proxy.ts` (Next.js 16 middleware) and return an HTTP **503** status with a rendered HTML maintenance page. No route — authenticated or unauthenticated — may return a 2xx response while the kill switch is active.
 - **FR-016**: The `Idea.category` field MUST be constrained to a predefined list of valid values enforced at the application layer before any database insert or update. The allowed values MUST be defined in a single constants file so they can be updated without a schema migration. Invalid category values MUST be rejected with a validation error.
 
 ### Key Entities
 
-- **User**: Represents a registered employee. Has a unique identifier, work email, credential (hashed password), display name (NOT NULL — auto-derived from email local-part at registration, e.g. `aykan.ugur` from `aykan.ugur@epam.com`; editable later in profile), role (standard / admin / super-admin), email-verification status, and timestamps. Can author many ideas and perform many reviews.
+- **User**: Represents a registered employee. Has a unique identifier, work email, credential (hashed password), display name (NOT NULL — auto-derived from email local-part at registration, e.g. `aykan.ugur` from `aykan.ugur@epam.com`; editable later in profile), role (`SUBMITTER` / `ADMIN` / `SUPERADMIN` — displayed as "Submitter" / "Admin" / "Super Admin" in UI), email-verification status, and timestamps. Can author many ideas and perform many reviews.
 - **Idea**: Represents an employee innovation submission. Has a title, description, category (string column constrained to a predefined list enforced at application level), lifecycle status, visibility setting, optional attachment reference, authoring user, and timestamps. Belongs to one author; may have at most one review.
-- **IdeaReview**: Represents an administrator's evaluation of a single idea. Has a decision (accepted or rejected), a comment, the reviewing user, and a timestamp. Belongs to exactly one idea and one reviewer.
+- **IdeaReview**: Represents an administrator's evaluation of a single idea. Has a decision (`ReviewDecision` enum: `ACCEPTED` or `REJECTED` only — enforced at the database level), a comment, the reviewing user, and a timestamp. Belongs to exactly one idea and one reviewer.
 - **VerificationToken**: Represents a single-use, time-limited token tied to a user's email address. Used by EPIC-02 to verify email ownership after registration. Has a token value (unique), the associated email, and an expiry timestamp.
 
 ## Success Criteria *(mandatory)*
@@ -148,7 +149,7 @@ A developer can onboard to the project within minutes and knows exactly which en
 ### Measurable Outcomes
 
 - **SC-001**: A developer who has never seen the project can clone the repository, complete setup, and have a running local instance in under 10 minutes, following only the documented steps.
-- **SC-002**: The build and code-quality checks pass with 0 errors and 0 warnings — no suppressions, overrides, or ignored rules permitted.
+- **SC-002**: `npm run build`, `npm run lint`, and `npm run type-check` each exit with code 0, reporting 0 errors and 0 warnings in project-authored code (`app/`, `lib/`, `components/`, `constants/`). Third-party build notices from `node_modules` are excluded. No ESLint suppressions (`eslint-disable`), no TypeScript overrides (`@ts-ignore`, `@ts-expect-error`), and no ignored rules are permitted in project-authored files.
 - **SC-003**: 100% of required environment variables are documented in the project's environment variable file — no undocumented keys exist anywhere in the codebase.
 - **SC-004**: The production deployment URL returns a successful response within 60 seconds of a push to the main branch, with no manual intervention required.
 - **SC-005**: The database schema migration completes without errors in a fresh environment and all three tables are visible and queryable.
@@ -170,6 +171,14 @@ A developer can onboard to the project within minutes and knows exactly which en
 - Q: Is `User.displayName` required or optional, and where does its initial value come from? → A: NOT NULL — auto-derived from email local-part at registration (e.g. `aykan.ugur` from `aykan.ugur@epam.com`); editable later in profile settings (FR-014).
 - Q: Should the `.env.example` name all variables explicitly or stay vague? → A: Full explicit enumeration — 13 variables named in spec (FR-010): `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `NEXTAUTH_URL`, `RESEND_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SUPERADMIN_EMAIL`, and 5 feature flags.
 - Q: Is `Idea.category` a free-text field or constrained to a predefined list? → A: Predefined list enforced at application level (string column in DB); categories defined in a constants file; adding a category requires no migration (FR-016).
+
+### Session 2026-02-24 (continued)
+
+- Q: What HTTP status, response format, and implementation layer does the FR-015 "maintenance response" require? → A: HTTP 503 + rendered HTML maintenance page implemented in `proxy.ts` (Next.js 16 middleware); intercepts all routes including API routes; no redirect, no JSON, no 200 permitted (FR-015 updated).
+- Q: Which commands constitute "code quality checks" in FR-002 and SC-002? → A: Exactly two — `npm run lint` (ESLint, zero warnings) and `npm run type-check` (`tsc --noEmit`, zero errors). Prettier is enforced by the pre-commit hook only, not a separate CI check (FR-002, SC-002 updated).
+- Q: Should `IdeaReview.decision` reuse `IdeaStatus` or have its own enum? → A: Dedicated `ReviewDecision { ACCEPTED REJECTED }` enum — DB enforces only valid review outcomes; `IdeaStatus` is not used on `IdeaReview.decision` (data model updated).
+- Q: What is the canonical name for the default user role — "standard employee", "Employee", or `SUBMITTER`? → A: `SUBMITTER` is canonical in all code and enums; displayed as "Submitter" in UI prose. All spec narrative normalised — "standard employee" removed (FR-006 and Key Entities updated).
+- Q: Does "zero warnings" in FR-001 and SC-002 apply to the full build stdout or project-authored code only? → A: Project-authored code only (`app/`, `lib/`, `components/`, `constants/`). Third-party/`node_modules` build notices are excluded. No `eslint-disable` or `@ts-ignore` permitted in project files (FR-001 and SC-002 updated).
 
 ---
 
