@@ -18,41 +18,70 @@ interface DashboardStatsProps {
 }
 
 const STAT_CARDS = [
-  { key: 'total', label: 'Total Ideas', color: 'text-foreground', bg: 'bg-card' },
+  {
+    key: 'total',
+    label: 'Total Ideas',
+    numColor: '#F0F0FA',
+    bg: '#1A1A2A',
+    border: 'rgba(255,255,255,0.08)',
+    labelColor: '#8888A8',
+  },
   {
     key: 'submitted',
     label: 'Awaiting Review',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50 border-amber-200',
+    numColor: '#fbbf24',
+    bg: 'rgba(245,158,11,0.08)',
+    border: 'rgba(245,158,11,0.25)',
+    labelColor: '#fbbf24',
   },
   {
     key: 'underReview',
     label: 'Under Review',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50 border-blue-200',
+    numColor: '#60a5fa',
+    bg: 'rgba(59,130,246,0.08)',
+    border: 'rgba(59,130,246,0.25)',
+    labelColor: '#60a5fa',
   },
   {
     key: 'accepted',
     label: 'Accepted',
-    color: 'text-green-700',
-    bg: 'bg-green-50 border-green-200',
+    numColor: '#6ee7b7',
+    bg: 'rgba(16,185,129,0.08)',
+    border: 'rgba(16,185,129,0.25)',
+    labelColor: '#6ee7b7',
   },
-  { key: 'rejected', label: 'Rejected', color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    numColor: '#fca5a5',
+    bg: 'rgba(239,68,68,0.08)',
+    border: 'rgba(239,68,68,0.25)',
+    labelColor: '#fca5a5',
+  },
 ] as const
 
 export default function DashboardStats({ stats }: DashboardStatsProps) {
   return (
     <section aria-label="Dashboard statistics">
-      <h2 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <h2
+        className="mb-3 text-sm font-semibold uppercase tracking-wide"
+        style={{ color: '#8888A8' }}
+      >
         Overview
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {STAT_CARDS.map(({ key, label, color, bg }) => (
-          <div key={key} className={`rounded-xl border p-4 ${bg}`}>
-            <p className="text-2xl font-bold tabular-nums leading-none text-foreground">
+        {STAT_CARDS.map(({ key, label, numColor, bg, border, labelColor }) => (
+          <div
+            key={key}
+            className="rounded-xl p-4"
+            style={{ background: bg, border: `1px solid ${border}` }}
+          >
+            <p className="text-2xl font-bold tabular-nums leading-none" style={{ color: numColor }}>
               {stats[key]}
             </p>
-            <p className={`mt-1 text-xs font-medium ${color}`}>{label}</p>
+            <p className="mt-1 text-xs font-medium" style={{ color: labelColor }}>
+              {label}
+            </p>
           </div>
         ))}
       </div>

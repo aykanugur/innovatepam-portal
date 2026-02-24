@@ -106,12 +106,14 @@ export default async function AnalyticsPage() {
   }))
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
+    <main className="min-h-screen py-10" style={{ background: '#060608' }}>
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
+            Analytics
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: '#8888A8' }}>
             Idea submission trends and engagement metrics.
           </p>
         </div>
@@ -119,17 +121,26 @@ export default async function AnalyticsPage() {
         {/* Charts grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Bar chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <div
+            className="rounded-xl p-6 lg:col-span-2"
+            style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
             <IdeasByCategoryChart data={categoryData} />
           </div>
 
           {/* Line chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
             <SubmissionTrendChart data={trendData} />
           </div>
 
           {/* Top contributors table */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
             <TopContributorsTable data={topContributorsData} />
           </div>
         </div>

@@ -17,7 +17,7 @@ interface TopContributorsTableProps {
 export function TopContributorsTable({ data }: TopContributorsTableProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-24 items-center justify-center text-sm text-gray-500">
+      <div className="flex h-24 items-center justify-center text-sm" style={{ color: '#8888A8' }}>
         No submissions yet
       </div>
     )
@@ -25,21 +25,40 @@ export function TopContributorsTable({ data }: TopContributorsTableProps) {
 
   return (
     <div>
-      <h3 className="mb-4 text-base font-semibold text-gray-900">Top Contributors</h3>
+      <h3 className="mb-4 text-base font-semibold" style={{ color: '#F0F0FA' }}>
+        Top Contributors
+      </h3>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-200">
-            <th className="pb-2 text-left font-medium text-gray-500">#</th>
-            <th className="pb-2 text-left font-medium text-gray-500">Name</th>
-            <th className="pb-2 text-right font-medium text-gray-500">Ideas</th>
+          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <th className="pb-2 text-left font-medium" style={{ color: '#8888A8' }}>
+              #
+            </th>
+            <th className="pb-2 text-left font-medium" style={{ color: '#8888A8' }}>
+              Name
+            </th>
+            <th className="pb-2 text-right font-medium" style={{ color: '#8888A8' }}>
+              Ideas
+            </th>
           </tr>
         </thead>
         <tbody>
           {data.map((row, index) => (
-            <tr key={row.displayName} className="border-b border-gray-100 last:border-0">
-              <td className="py-2 pr-4 text-gray-400 tabular-nums">{index + 1}</td>
-              <td className="py-2 font-medium text-gray-900">{row.displayName}</td>
-              <td className="py-2 text-right tabular-nums text-gray-700">{row.count}</td>
+            <tr
+              key={row.displayName}
+              style={{
+                borderBottom: index < data.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              }}
+            >
+              <td className="py-2 pr-4 tabular-nums" style={{ color: '#8888A8' }}>
+                {index + 1}
+              </td>
+              <td className="py-2 font-medium" style={{ color: '#F0F0FA' }}>
+                {row.displayName}
+              </td>
+              <td className="py-2 text-right tabular-nums" style={{ color: '#00c8ff' }}>
+                {row.count}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -71,23 +71,30 @@ export default async function AdminReviewPage({ params }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
+    <main className="min-h-screen p-8" style={{ background: '#060608' }}>
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/admin" className="hover:text-foreground transition-colors">
+        <nav className="flex items-center gap-2 text-sm" style={{ color: '#8888A8' }}>
+          <Link href="/admin" className="transition-colors hover:text-white">
             Admin Dashboard
           </Link>
           <span>/</span>
-          <span className="text-foreground font-medium truncate max-w-xs">{idea.title}</span>
+          <span className="font-medium truncate max-w-xs" style={{ color: '#F0F0FA' }}>
+            {idea.title}
+          </span>
         </nav>
 
         {/* Idea Summary Card */}
-        <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+        <div
+          className="rounded-xl p-6 space-y-3"
+          style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold text-foreground">{idea.title}</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-xl font-semibold" style={{ color: '#F0F0FA' }}>
+                {idea.title}
+              </h1>
+              <p className="text-sm" style={{ color: '#8888A8' }}>
                 By {idea.author.displayName} ·{' '}
                 {CATEGORY_LABEL[idea.category as CategorySlug] ?? idea.category} ·{' '}
                 {new Date(idea.createdAt).toLocaleDateString(undefined, {
@@ -99,14 +106,16 @@ export default async function AdminReviewPage({ params }: PageProps) {
             </div>
             <span
               className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                STATUS_BADGE_CLASSES[idea.status]?.bg ?? 'bg-gray-100'
-              } ${STATUS_BADGE_CLASSES[idea.status]?.text ?? 'text-gray-700'}`}
+                STATUS_BADGE_CLASSES[idea.status]?.bg ?? 'bg-white/10'
+              } ${STATUS_BADGE_CLASSES[idea.status]?.text ?? 'text-slate-300'}`}
             >
               {STATUS_BADGE_CLASSES[idea.status]?.label ?? idea.status}
             </span>
           </div>
 
-          <p className="text-sm text-foreground whitespace-pre-wrap">{idea.description}</p>
+          <p className="text-sm whitespace-pre-wrap" style={{ color: '#D0D0E8' }}>
+            {idea.description}
+          </p>
         </div>
 
         {/* Decision Card — shown when already decided */}
@@ -138,7 +147,8 @@ export default async function AdminReviewPage({ params }: PageProps) {
         <div>
           <Link
             href="/admin"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm transition-colors hover:text-white"
+            style={{ color: '#8888A8' }}
           >
             ← Back to Admin Dashboard
           </Link>

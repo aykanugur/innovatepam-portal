@@ -1,15 +1,10 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: '403 Forbidden — InnovatEPAM',
+  title: '404 Not Found — InnovatEPAM',
 }
 
-/**
- * FR-012: Shown when an authenticated user attempts to access a route
- * that requires a higher role (e.g., SUBMITTER accessing /admin).
- * proxy.ts redirects here; the page returns via the normal RSC render path.
- */
-export default function ForbiddenPage() {
+export default function NotFound() {
   return (
     <main
       className="flex min-h-screen flex-col items-center justify-center px-4 py-12 text-center"
@@ -20,13 +15,13 @@ export default function ForbiddenPage() {
         aria-hidden="true"
         style={{ color: 'rgba(0,200,255,0.25)', fontFamily: 'var(--font-sora, sans-serif)' }}
       >
-        403
+        404
       </p>
       <h1 className="mb-2 text-2xl font-semibold" style={{ color: '#F0F0FA' }}>
-        Access denied
+        Page not found
       </h1>
       <p className="mb-8 text-sm" style={{ color: '#8888A8' }}>
-        You don&apos;t have permission to access this page.
+        The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
       <Link
         href="/dashboard"

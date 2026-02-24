@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * T015 — Idea card component.
  * Renders a summary card for a single idea: title, author, category label,

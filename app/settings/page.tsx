@@ -35,12 +35,14 @@ export default async function SettingsPage() {
   const currentDisplayName = user?.displayName ?? ''
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
+    <main className="min-h-screen py-10" style={{ background: '#060608' }}>
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
+            Settings
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: '#8888A8' }}>
             Manage your account settings and preferences.
           </p>
         </div>
@@ -48,12 +50,18 @@ export default async function SettingsPage() {
         {/* Settings sections */}
         <div className="space-y-8">
           {/* Display Name */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
             <DisplayNameForm currentDisplayName={currentDisplayName} />
           </div>
 
           {/* Password Change */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
             <PasswordChangeForm />
           </div>
         </div>

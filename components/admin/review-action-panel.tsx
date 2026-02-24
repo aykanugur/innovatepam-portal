@@ -41,13 +41,22 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
   // ── SUBMITTED: show Start Review button ──────────────────────────────────
   if (idea.status === 'SUBMITTED') {
     return (
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Start Review</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
+      <div
+        className="rounded-xl p-6"
+        style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <h2 className="mb-2 text-sm font-semibold" style={{ color: '#F0F0FA' }}>
+          Start Review
+        </h2>
+        <p className="mb-4 text-sm" style={{ color: '#8888A8' }}>
           Claim this idea for review. Once started, enter a comment and decision.
         </p>
 
-        {error && <p className="mb-3 text-sm font-medium text-destructive">{error}</p>}
+        {error && (
+          <p className="mb-3 text-sm font-medium" style={{ color: '#fca5a5' }}>
+            {error}
+          </p>
+        )}
 
         <button
           type="button"
@@ -69,7 +78,8 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
               }
             })
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
         >
           {isPending ? 'Starting…' : 'Start Review'}
         </button>
@@ -80,9 +90,14 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
   // ── UNDER_REVIEW: guard against self-review ───────────────────────────────
   if (idea.status === 'UNDER_REVIEW' && isSelfReview) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
-        <h2 className="mb-1 text-sm font-semibold text-amber-800">Self-Review Not Allowed</h2>
-        <p className="text-sm text-amber-700">
+      <div
+        className="rounded-xl p-6"
+        style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}
+      >
+        <h2 className="mb-1 text-sm font-semibold" style={{ color: '#fbbf24' }}>
+          Self-Review Not Allowed
+        </h2>
+        <p className="text-sm" style={{ color: '#fcd34d' }}>
           You submitted this idea. Another reviewer must evaluate it (US-012 AC-6).
         </p>
       </div>
@@ -112,18 +127,28 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
     }
 
     return (
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-foreground">Enter Your Decision</h2>
+      <div
+        className="rounded-xl p-6 space-y-4"
+        style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <h2 className="text-sm font-semibold" style={{ color: '#F0F0FA' }}>
+          Enter Your Decision
+        </h2>
 
-        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+        {error && (
+          <p className="text-sm font-medium" style={{ color: '#fca5a5' }}>
+            {error}
+          </p>
+        )}
 
         <div>
           <label
             htmlFor="review-comment"
-            className="block text-sm font-medium text-foreground mb-1"
+            className="block text-sm font-medium mb-1"
+            style={{ color: '#C0C0D8' }}
           >
             Review Comment{' '}
-            <span className="text-muted-foreground font-normal">
+            <span className="font-normal" style={{ color: '#8888A8' }}>
               (min {minCommentLen} characters)
             </span>
           </label>
@@ -134,14 +159,24 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
             placeholder="Provide detailed feedback for the submitter…"
             rows={4}
             disabled={isPending}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 resize-none"
+            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 disabled:opacity-50 resize-none"
+            style={
+              {
+                background: '#0C0C14',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#F0F0FA',
+                focusRingColor: '#00c8ff',
+              } as React.CSSProperties
+            }
           />
           <p
-            className={`mt-1 text-xs ${
-              commentTrimmed.length > 0 && commentTrimmed.length < minCommentLen
-                ? 'text-destructive'
-                : 'text-muted-foreground'
-            }`}
+            className="mt-1 text-xs"
+            style={{
+              color:
+                commentTrimmed.length > 0 && commentTrimmed.length < minCommentLen
+                  ? '#fca5a5'
+                  : '#8888A8',
+            }}
           >
             {commentTrimmed.length} / {minCommentLen}+ characters
           </p>
@@ -152,7 +187,8 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
             type="button"
             disabled={isPending || !commentValid}
             onClick={() => handleDecision('ACCEPTED')}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: '#059669' }}
           >
             {isPending ? 'Saving…' : 'Accept'}
           </button>
@@ -160,7 +196,8 @@ export default function ReviewActionPanel({ idea, currentUser }: ReviewActionPan
             type="button"
             disabled={isPending || !commentValid}
             onClick={() => handleDecision('REJECTED')}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: '#dc2626' }}
           >
             {isPending ? 'Saving…' : 'Reject'}
           </button>

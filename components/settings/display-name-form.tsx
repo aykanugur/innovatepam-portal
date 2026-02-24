@@ -39,17 +39,25 @@ export function DisplayNameForm({ currentDisplayName }: DisplayNameFormProps) {
   return (
     <section aria-labelledby="display-name-heading">
       <div className="mb-4">
-        <h2 id="display-name-heading" className="text-lg font-semibold text-gray-900">
+        <h2
+          id="display-name-heading"
+          className="text-lg font-semibold"
+          style={{ color: '#F0F0FA' }}
+        >
           Display Name
         </h2>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm" style={{ color: '#8888A8' }}>
           This name is shown on your submitted ideas and in the admin panel.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
         <div>
-          <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="displayName"
+            className="block text-sm font-medium"
+            style={{ color: '#C0C0D8' }}
+          >
             Display Name
           </label>
           <input
@@ -65,19 +73,24 @@ export function DisplayNameForm({ currentDisplayName }: DisplayNameFormProps) {
               setStatus('idle')
             }}
             disabled={isPending}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+            className="mt-1 block w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
+            style={{
+              background: '#0C0C14',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: '#F0F0FA',
+            }}
             placeholder="Your display name"
           />
         </div>
 
         {status === 'success' && (
-          <p role="status" className="text-sm font-medium text-green-600">
+          <p role="status" className="text-sm font-medium" style={{ color: '#6ee7b7' }}>
             Display name updated successfully.
           </p>
         )}
 
         {status === 'error' && (
-          <p role="alert" className="text-sm font-medium text-red-600">
+          <p role="alert" className="text-sm font-medium" style={{ color: '#fca5a5' }}>
             {errorMessage}
           </p>
         )}
@@ -85,7 +98,8 @@ export function DisplayNameForm({ currentDisplayName }: DisplayNameFormProps) {
         <button
           type="submit"
           disabled={isPending || displayName.trim().length === 0}
-          className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
         >
           {isPending ? 'Saving…' : 'Save Display Name'}
         </button>

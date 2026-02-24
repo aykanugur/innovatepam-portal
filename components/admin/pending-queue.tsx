@@ -39,11 +39,19 @@ export default function PendingQueue({ ideas }: PendingQueueProps) {
   if (ideas.length === 0) {
     return (
       <section aria-label="Pending review queue">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h2
+          className="mb-3 text-sm font-semibold uppercase tracking-wide"
+          style={{ color: '#8888A8' }}
+        >
           Pending Review
         </h2>
-        <div className="rounded-xl border border-border bg-card px-6 py-10 text-center">
-          <p className="text-sm text-muted-foreground">No ideas awaiting review. Great work!</p>
+        <div
+          className="rounded-xl px-6 py-10 text-center"
+          style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <p className="text-sm" style={{ color: '#8888A8' }}>
+            No ideas awaiting review. Great work!
+          </p>
         </div>
       </section>
     )
@@ -51,45 +59,74 @@ export default function PendingQueue({ ideas }: PendingQueueProps) {
 
   return (
     <section aria-label="Pending review queue">
-      <h2 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <h2
+        className="mb-3 text-sm font-semibold uppercase tracking-wide"
+        style={{ color: '#8888A8' }}
+      >
         Pending Review
-        <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+        <span
+          className="ml-2 rounded-full px-2 py-0.5 text-xs font-semibold"
+          style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}
+        >
           {ideas.length}
         </span>
       </h2>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div
+        className="overflow-hidden rounded-xl"
+        style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
         <table className="w-full text-sm">
-          <thead className="border-b border-border">
+          <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
             <tr className="text-left">
-              <th className="px-4 py-3 font-medium text-muted-foreground">Title</th>
-              <th className="hidden px-4 py-3 font-medium text-muted-foreground sm:table-cell">
+              <th className="px-4 py-3 font-medium" style={{ color: '#8888A8' }}>
+                Title
+              </th>
+              <th
+                className="hidden px-4 py-3 font-medium sm:table-cell"
+                style={{ color: '#8888A8' }}
+              >
                 Author
               </th>
-              <th className="hidden px-4 py-3 font-medium text-muted-foreground md:table-cell">
+              <th
+                className="hidden px-4 py-3 font-medium md:table-cell"
+                style={{ color: '#8888A8' }}
+              >
                 Category
               </th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">Submitted</th>
+              <th className="px-4 py-3 font-medium" style={{ color: '#8888A8' }}>
+                Submitted
+              </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {ideas.map((idea) => (
-              <tr key={idea.id} className="hover:bg-muted/40 transition-colors">
-                <td className="px-4 py-3 font-medium text-foreground max-w-xs truncate">
+              <tr
+                key={idea.id}
+                className="transition-colors"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+              >
+                <td
+                  className="px-4 py-3 font-medium max-w-xs truncate"
+                  style={{ color: '#F0F0FA' }}
+                >
                   {idea.title}
                 </td>
-                <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                <td className="hidden px-4 py-3 sm:table-cell" style={{ color: '#8888A8' }}>
                   {idea.author.displayName ?? 'Unknown'}
                 </td>
-                <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
+                <td className="hidden px-4 py-3 md:table-cell" style={{ color: '#8888A8' }}>
                   {CATEGORY_LABEL[idea.category as CategorySlug] ?? idea.category}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">{relativeTime(idea.createdAt)}</td>
+                <td className="px-4 py-3" style={{ color: '#8888A8' }}>
+                  {relativeTime(idea.createdAt)}
+                </td>
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/admin/review/${idea.id}`}
-                    className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    className="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
+                    style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
                   >
                     Review
                   </Link>
