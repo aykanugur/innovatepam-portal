@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { AuthBackgroundVideo } from '@/components/auth/auth-background-video'
 
 interface AuthLayoutProps {
   children: ReactNode
@@ -21,23 +22,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         className="relative hidden lg:flex lg:w-[58%] xl:w-[62%] flex-col overflow-hidden"
         style={{ background: '#060608' }}
       >
-        {/* Looping background video */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ opacity: 0.45, filter: 'saturate(1.4) brightness(0.75)' }}
-          aria-hidden
-        >
-          {/* Royalty-free abstract tech loop — replace src with your own video URL */}
-          <source
-            src="https://cdn.coverr.co/videos/coverr-abstract-purple-blue-waves-4846/1080p.mp4"
-            type="video/mp4"
-          />
-          <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-        </video>
+        {/* Looping slow background video (/public/auth-video.mp4) */}
+        <AuthBackgroundVideo />
 
         {/* Gradient overlays on top of video */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
