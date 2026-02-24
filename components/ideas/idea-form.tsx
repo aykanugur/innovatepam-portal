@@ -1,0 +1,346 @@
+'use client'
+
+/**
+ * T009/T013 — Idea submission form component.
+ * Controlled form covering title, description, category, visibility, and
+ * (when FEATURE_FILE_ATTACHMENT_ENABLED=true) an optional file attachment.
+ *
+ * Validation: inline on blur via CreateIdeaSchema; submit button locked after
+ * first click to prevent double-submission (FR-004).
+ * Character counters on title (max 100) and description (max 2,000) — FR-002.
+ * File attachment: PDF/PNG/JPG/DOCX/MD; max 5 MB — FR-005/FR-006/FR-008.
+ */
+
+import { useState, useRef, type FormEvent, type ChangeEvent } from 'react'
+import { useRouter } from 'next/navigation'
+import { CATEGORIES, type CategorySlug } from '@/constants/categories'
+import { CreateIdeaSchema } from '@/lib/validations/idea'
+import { createIdeaAction } from '@/lib/actions/create-idea'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface FormState {
+  title: string
+  description: string
+  category: CategorySlug | ''
+  visibility: 'PUBLIC' | 'PRIVATE'
+}
+
+interface FormErrors {
+  title?: string
+  description?: string
+  category?: string
+  visibility?: string
+  attachment?: string
+  general?: string
+}
+
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/markdown',
+  'text/plain', // .md files may be identified as text/plain
+]
+const MAX_FILE_BYTES = 5 * 1024 * 1024 // 5 MB
+
+interface IdeaFormProps {
+  /** When true, renders the optional file attachment field (T013) */
+  attachmentEnabled: boolean
+}
+
+export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
+  const router = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const [form, setForm] = useState<FormState>({
+    title: '',
+    description: '',
+    category: '',
+    visibility: 'PUBLIC',
+  })
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [file, setFile] = useState<File | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  // ─── Field helpers ────────────────────────────────────────────────────────
+
+  function handleChange(
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    // Clear field error on change
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
+  }
+
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0] ?? null
+    setErrors((prev) => ({ ...prev, attachment: undefined }))
+
+    if (!selected) {
+      setFile(null)
+      return
+    }
+
+    // Client-side type check
+    const isAllowedType =
+      ALLOWED_TYPES.includes(selected.type) ||
+      selected.name.endsWith('.md') ||
+      selected.name.endsWith('.markdown')
+    if (!isAllowedType) {
+      setErrors((prev) => ({
+        ...prev,
+        attachment: 'Only PDF, PNG, JPG, DOCX, and MD files are accepted.',
+      }))
+      if (fileRef.current) fileRef.current.value = ''
+      setFile(null)
+      return
+    }
+
+    if (selected.size > MAX_FILE_BYTES) {
+      setErrors((prev) => ({
+        ...prev,
+        attachment: 'File must be under 5 MB.',
+      }))
+      if (fileRef.current) fileRef.current.value = ''
+      setFile(null)
+      return
+    }
+
+    setFile(selected)
+  }
+
+  // ─── Inline validation on blur ────────────────────────────────────────────
+
+  function validateField(name: keyof FormState) {
+    const partial = { [name]: form[name] }
+    const result = CreateIdeaSchema.partial().safeParse(partial)
+    if (!result.success) {
+      const msg =
+        result.error.flatten().fieldErrors[
+          name as keyof ReturnType<typeof result.error.flatten>['fieldErrors']
+        ]?.[0]
+      setErrors((prev) => ({ ...prev, [name]: msg }))
+    }
+  }
+
+  // ─── Submit ───────────────────────────────────────────────────────────────
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+
+    // Full validation before submit
+    const parsed = CreateIdeaSchema.safeParse(form)
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors
+      setErrors({
+        title: fieldErrors.title?.[0],
+        description: fieldErrors.description?.[0],
+        category: fieldErrors.category?.[0],
+        visibility: fieldErrors.visibility?.[0],
+      })
+      return
+    }
+
+    setSubmitting(true)
+    setErrors({})
+
+    try {
+      const formData = new FormData()
+      formData.append('title', parsed.data.title)
+      formData.append('description', parsed.data.description)
+      formData.append('category', parsed.data.category)
+      formData.append('visibility', parsed.data.visibility)
+      if (file) {
+        formData.append('attachment', file)
+      }
+
+      const result = await createIdeaAction(formData)
+
+      if (result.error) {
+        setErrors({ general: result.error })
+        setSubmitting(false)
+        return
+      }
+
+      if (result.id) {
+        router.push(`/ideas/${result.id}`)
+      }
+    } catch {
+      setErrors({ general: 'Something went wrong. Please try again.' })
+      setSubmitting(false)
+    }
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+      {errors.general && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {errors.general}
+        </div>
+      )}
+
+      {/* Title */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <label htmlFor="title" className="block text-sm font-medium text-foreground">
+            Title <span aria-hidden>*</span>
+          </label>
+          <span className="text-xs text-muted-foreground">{form.title.length}/100</span>
+        </div>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          maxLength={100}
+          value={form.title}
+          onChange={handleChange}
+          onBlur={() => validateField('title')}
+          aria-describedby={errors.title ? 'title-error' : undefined}
+          aria-invalid={!!errors.title}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder="Concise summary of your idea"
+        />
+        {errors.title && (
+          <p id="title-error" role="alert" className="text-xs text-red-600">
+            {errors.title}
+          </p>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <label htmlFor="description" className="block text-sm font-medium text-foreground">
+            Description <span aria-hidden>*</span>
+          </label>
+          <span className="text-xs text-muted-foreground">{form.description.length}/2,000</span>
+        </div>
+        <textarea
+          id="description"
+          name="description"
+          rows={6}
+          maxLength={2000}
+          value={form.description}
+          onChange={handleChange}
+          onBlur={() => validateField('description')}
+          aria-describedby={errors.description ? 'desc-error' : undefined}
+          aria-invalid={!!errors.description}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder="Describe your idea in detail — the problem it solves, the expected impact…"
+        />
+        {errors.description && (
+          <p id="desc-error" role="alert" className="text-xs text-red-600">
+            {errors.description}
+          </p>
+        )}
+      </div>
+
+      {/* Category */}
+      <div className="space-y-1">
+        <label htmlFor="category" className="block text-sm font-medium text-foreground">
+          Category <span aria-hidden>*</span>
+        </label>
+        <select
+          id="category"
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          onBlur={() => validateField('category')}
+          aria-describedby={errors.category ? 'category-error' : undefined}
+          aria-invalid={!!errors.category}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="" disabled>
+            Select a category
+          </option>
+          {CATEGORIES.map(({ slug, label }) => (
+            <option key={slug} value={slug}>
+              {label}
+            </option>
+          ))}
+        </select>
+        {errors.category && (
+          <p id="category-error" role="alert" className="text-xs text-red-600">
+            {errors.category}
+          </p>
+        )}
+      </div>
+
+      {/* Visibility */}
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium text-foreground">
+          Visibility <span aria-hidden>*</span>
+        </legend>
+        <div className="flex gap-6">
+          {(['PUBLIC', 'PRIVATE'] as const).map((value) => (
+            <label key={value} className="flex cursor-pointer items-center gap-2">
+              <input
+                type="radio"
+                name="visibility"
+                value={value}
+                checked={form.visibility === value}
+                onChange={handleChange}
+                className="h-4 w-4 accent-primary"
+              />
+              <span className="text-sm text-foreground">
+                {value === 'PUBLIC' ? 'Public' : 'Private'}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {value === 'PUBLIC' ? '(visible to all employees)' : '(only you and admins)'}
+              </span>
+            </label>
+          ))}
+        </div>
+        {errors.visibility && (
+          <p role="alert" className="text-xs text-red-600">
+            {errors.visibility}
+          </p>
+        )}
+      </fieldset>
+
+      {/* File attachment (T013) — rendered only when flag is on */}
+      {attachmentEnabled && (
+        <div className="space-y-1">
+          <label htmlFor="attachment" className="block text-sm font-medium text-foreground">
+            Attachment <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <input
+            ref={fileRef}
+            id="attachment"
+            name="attachment"
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.docx,.md"
+            onChange={handleFileChange}
+            aria-describedby="attachment-hint attachment-error"
+            className="w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+          />
+          <p id="attachment-hint" className="text-xs text-muted-foreground">
+            PDF, PNG, JPG, DOCX, or MD — max 5 MB
+          </p>
+          {errors.attachment && (
+            <p id="attachment-error" role="alert" className="text-xs text-red-600">
+              {errors.attachment}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {submitting ? 'Submitting…' : 'Submit Idea'}
+      </button>
+    </form>
+  )
+}

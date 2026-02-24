@@ -33,6 +33,11 @@ enum ReviewDecision {
   REJECTED // admin rejected the idea
 }
 
+enum AuditAction {
+  IDEA_CREATED // idea was submitted by an employee
+  IDEA_DELETED // idea was deleted by author or admin
+}
+
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
@@ -45,8 +50,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  ideas   Idea[]       @relation("UserIdeas")
-  reviews IdeaReview[] @relation("UserReviews")
+  ideas     Idea[]       @relation("UserIdeas")
+  reviews   IdeaReview[] @relation("UserReviews")
+  auditLogs AuditLog[]   @relation("UserAuditLogs")
 }
 
 model Idea {
@@ -79,6 +85,17 @@ model IdeaReview {
   reviewer   User   @relation("UserReviews", fields: [reviewerId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  actorId   String
+  action    AuditAction
+  targetId  String      // Idea.id
+  metadata  Json?       // e.g. { ideaTitle, visibility, deletedByRole }
+  createdAt DateTime    @default(now())
+
+  actor User @relation("UserAuditLogs", fields: [actorId], references: [id])
 }
 
 model VerificationToken {
