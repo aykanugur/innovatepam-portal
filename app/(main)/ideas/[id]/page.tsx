@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
@@ -67,9 +68,9 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
-        <a href="/ideas" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/ideas" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to ideas
-        </a>
+        </Link>
       </div>
 
       <IdeaDetail

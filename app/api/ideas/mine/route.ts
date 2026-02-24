@@ -3,12 +3,12 @@
  * Both PUBLIC and PRIVATE, ordered newest-first. No pagination (alpha scope).
  * FR-023, FR-027, contracts/ideas.md §GET /api/ideas/mine.
  */
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { apiError } from '@/lib/api-error'
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return apiError(401, 'Unauthorized')
 

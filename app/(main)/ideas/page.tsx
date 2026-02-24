@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
@@ -5,7 +6,6 @@ import IdeaList from '@/components/ideas/idea-list'
 import CategoryFilter from '@/components/ideas/category-filter'
 import { IdeaListQuerySchema } from '@/lib/validations/idea'
 import type { Metadata } from 'next'
-import type { CategorySlug } from '@/constants/categories'
 
 export const metadata: Metadata = {
   title: 'Browse Ideas — InnovatEPAM',
@@ -89,12 +89,12 @@ export default async function IdeasPage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        <a
+        <Link
           href="/ideas/new"
           className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
         >
           Submit Idea
-        </a>
+        </Link>
       </div>
 
       {/* Category filter */}
