@@ -155,6 +155,54 @@ lint → type-check → test:coverage (≥80% gate) → build
 
 ---
 
+## Integration Tests
+
+Integration tests hit a real Postgres database (not the dev/prod DB) and require Node environment.
+
+### Setup
+
+1. **Create a dedicated test database** — create a separate Neon (or local PostgreSQL) database called e.g. `neondb_test`.
+
+2. **Set `DATABASE_URL_TEST`** in your local `.env.local`:
+
+   ```bash
+   DATABASE_URL_TEST="postgresql://USER:PASSWORD@HOST/TEST_DB?sslmode=require"
+   ```
+
+   > This must **never** point to your dev or prod database — integration tests delete rows by test-run prefix.
+
+3. **Run migrations against the test DB**:
+
+   ```bash
+   DATABASE_URL="$DATABASE_URL_TEST" npx prisma migrate deploy
+   ```
+
+4. **Run integration tests**:
+   ```bash
+   DATABASE_URL="$DATABASE_URL_TEST" npm run test:unit -- __tests__/integration/
+   ```
+
+### CI Setup
+
+Add `DATABASE_URL_TEST` as a GitHub repository secret:
+
+- Go to: **Settings → Secrets and variables → Actions → New repository secret**
+- Name: `DATABASE_URL_TEST`
+- Value: the test database connection string (see `.env.example` for format)
+
+The CI pipeline automatically providers this secret to the `test` job (see `.github/workflows/ci.yml`).
+
+### E2E Seed Strategy
+
+E2E tests use deterministic `[test:${runId}]` title prefixes to isolate test data:
+
+- `seedTestData(request, runId)` — calls `POST /api/test/seed` with `{ runId }` to create users/ideas prefixed with `[test:${runId}]`
+- `cleanupTestData(request, runId)` — calls `POST /api/test/cleanup` with `{ runId }` to delete all records where `title LIKE '[test:${runId}]%'`
+- Both routes are only active when `NODE_ENV=test` (return 403 otherwise)
+- `cleanupTestData` is called in `afterEach` to ensure test isolation
+
+---
+
 ## Common Issues
 
 | Issue                                                  | Fix                                                                  |

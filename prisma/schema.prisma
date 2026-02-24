@@ -34,8 +34,11 @@ enum ReviewDecision {
 }
 
 enum AuditAction {
-  IDEA_CREATED // idea was submitted by an employee
-  IDEA_DELETED // idea was deleted by author or admin
+  IDEA_CREATED          // idea was submitted by an employee
+  IDEA_DELETED          // idea was deleted by author or admin
+  IDEA_REVIEW_STARTED   // admin opened a review
+  IDEA_REVIEWED         // admin finalized Accept/Reject
+  IDEA_REVIEW_ABANDONED // SUPERADMIN reset UNDER_REVIEW → SUBMITTED
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -74,12 +77,14 @@ model Idea {
 }
 
 model IdeaReview {
-  id       String         @id @default(cuid())
-  decision ReviewDecision
-  comment  String
+  id        String          @id @default(cuid())
+  decision  ReviewDecision? // null until finalized
+  comment   String?         // null until finalized; min 10 chars when set
+  startedAt DateTime        @default(now())
+  decidedAt DateTime?       // null until finalized
 
   ideaId String @unique
-  idea   Idea   @relation("IdeaReview", fields: [ideaId], references: [id])
+  idea   Idea   @relation("IdeaReview", fields: [ideaId], references: [id], onDelete: Cascade)
 
   reviewerId String
   reviewer   User   @relation("UserReviews", fields: [reviewerId], references: [id])

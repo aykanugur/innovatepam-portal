@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
   const isProtected =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/api/admin')
+    pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/settings')
 
   if (isProtected && !session) {
     const loginUrl = request.nextUrl.clone()

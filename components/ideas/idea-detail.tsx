@@ -16,8 +16,10 @@ import DeleteIdeaModal from '@/components/ideas/delete-idea-modal'
 import AdminDeleteButton from '@/components/ideas/admin-delete-button'
 
 interface IdeaReviewDetail {
-  decision: 'ACCEPTED' | 'REJECTED'
-  comment: string
+  // FR-007, SC-002: nullable — IdeaReview.decision and .comment are null
+  // while UNDER_REVIEW; only set when finalized (ACCEPTED or REJECTED)
+  decision: 'ACCEPTED' | 'REJECTED' | null
+  comment: string | null
   reviewerName: string
   reviewedAt: string
 }
@@ -120,8 +122,8 @@ export default function IdeaDetail({
         </div>
       )}
 
-      {/* Review card (FR-017) */}
-      {review && (
+      {/* Review card (FR-017) — only rendered when decision is finalized (not during UNDER_REVIEW state) */}
+      {review && review.decision !== null && review.comment !== null && (
         <div className="rounded-xl border border-border bg-card p-6">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Review Decision</h2>
           <div className="space-y-2">

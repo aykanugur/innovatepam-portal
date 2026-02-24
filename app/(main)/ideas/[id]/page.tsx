@@ -87,10 +87,12 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         review={
           idea.review
             ? {
-                decision: idea.review.decision,
+                // decision and comment are nullable (set only when finalized)
+                decision: idea.review.decision as 'ACCEPTED' | 'REJECTED' | null,
                 comment: idea.review.comment,
-                reviewerName: idea.review.reviewer.displayName,
-                reviewedAt: idea.review.createdAt.toISOString(),
+                reviewerName: idea.review.reviewer.displayName ?? 'Reviewer',
+                reviewedAt:
+                  idea.review.decidedAt?.toISOString() ?? idea.review.createdAt.toISOString(),
               }
             : null
         }
