@@ -16,8 +16,10 @@ import DeleteIdeaModal from '@/components/ideas/delete-idea-modal'
 import AdminDeleteButton from '@/components/ideas/admin-delete-button'
 
 interface IdeaReviewDetail {
-  decision: 'ACCEPTED' | 'REJECTED'
-  comment: string
+  // FR-007, SC-002: nullable — IdeaReview.decision and .comment are null
+  // while UNDER_REVIEW; only set when finalized (ACCEPTED or REJECTED)
+  decision: 'ACCEPTED' | 'REJECTED' | null
+  comment: string | null
   reviewerName: string
   reviewedAt: string
 }
@@ -76,7 +78,9 @@ export default function IdeaDetail({
       {/* Header */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
+            {title}
+          </h1>
           <span
             className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-medium ${badge.bg} ${badge.text}`}
             aria-label={`Status: ${badge.label}`}
@@ -85,7 +89,10 @@ export default function IdeaDetail({
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        <div
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+          style={{ color: '#8888A8' }}
+        >
           <span>By {authorName}</span>
           <span aria-hidden>·</span>
           <span>{categoryLabel}</span>
@@ -97,47 +104,70 @@ export default function IdeaDetail({
       </div>
 
       {/* Description */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">{description}</p>
+      <div
+        className="rounded-2xl p-6"
+        style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#D0D0E8' }}>
+          {description}
+        </p>
       </div>
 
       {/* Attachment (FR-018 / FR-030) */}
-      {attachmentUrl && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Attachment</h2>
+      {attachmentUrl ? (
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <h2 className="mb-2 text-sm font-semibold" style={{ color: '#C0C0D8' }}>
+            Attachment
+          </h2>
           {attachmentEnabled ? (
             <a
               href={attachmentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium transition hover:opacity-80"
+              style={{ color: '#00c8ff' }}
             >
               Download Attachment →
             </a>
           ) : (
-            <p className="text-sm text-muted-foreground">Attachment unavailable</p>
+            <p className="text-sm" style={{ color: '#60607A' }}>
+              Attachment unavailable
+            </p>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Review card (FR-017) */}
-      {review && (
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 text-sm font-semibold text-foreground">Review Decision</h2>
+      {review && review.decision !== null && review.comment !== null ? (
+        <div
+          className="rounded-2xl p-6"
+          style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <h2 className="mb-4 text-sm font-semibold" style={{ color: '#C0C0D8' }}>
+            Review Decision
+          </h2>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  review.decision === 'ACCEPTED'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
+                className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                style={{
+                  background:
+                    review.decision === 'ACCEPTED'
+                      ? 'rgba(16,185,129,0.15)'
+                      : 'rgba(239,68,68,0.15)',
+                  color: review.decision === 'ACCEPTED' ? '#34D399' : '#F87171',
+                }}
               >
                 {review.decision === 'ACCEPTED' ? 'Accepted' : 'Rejected'}
               </span>
             </div>
-            <p className="text-sm text-foreground">{review.comment}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm" style={{ color: '#D0D0E8' }}>
+              {review.comment}
+            </p>
+            <p className="text-xs" style={{ color: '#60607A' }}>
               Reviewed by {review.reviewerName} on{' '}
               {new Date(review.reviewedAt).toLocaleDateString(undefined, {
                 year: 'numeric',
@@ -147,16 +177,14 @@ export default function IdeaDetail({
             </p>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Delete affordances (T027) */}
-      {/* Author can delete only when status = SUBMITTED (FR-019) */}
-      {isAuthor && status === 'SUBMITTED' && (
+      {isAuthor && status === 'SUBMITTED' ? (
         <DeleteIdeaModal ideaId={id} userDisplayName={currentUser.displayName} />
-      )}
+      ) : null}
 
-      {/* Admin/Superadmin can delete any idea (FR-020) */}
-      {isAdmin && <AdminDeleteButton ideaId={id} />}
+      {isAdmin ? <AdminDeleteButton ideaId={id} /> : null}
     </div>
   )
 }

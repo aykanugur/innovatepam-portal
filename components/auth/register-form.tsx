@@ -106,16 +106,27 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-      <h2 className="mb-1 text-xl font-semibold">Create account</h2>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Use your <strong>@epam.com</strong> email address to register.
+    <div>
+      {/* Heading */}
+      <h2
+        className="mb-1 font-bold tracking-tight"
+        style={{ fontSize: '1.75rem', letterSpacing: '-0.03em', color: '#F0F0FA' }}
+      >
+        Create account
+      </h2>
+      <p className="mb-8 text-sm" style={{ color: '#8888A8' }}>
+        Use your <strong style={{ color: '#C0C0D8' }}>@epam.com</strong> email address to register.
       </p>
 
       {serverError && (
         <div
           role="alert"
-          className="mb-4 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          className="mb-5 rounded-lg px-4 py-3 text-sm"
+          style={{
+            background: 'rgba(239,68,68,0.12)',
+            color: '#F87171',
+            border: '1px solid rgba(239,68,68,0.25)',
+          }}
         >
           {serverError}
         </div>
@@ -170,15 +181,21 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+          className="mt-2 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition"
+          style={{
+            background: loading ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 12px rgba(0,200,255,0.25)',
+          }}
         >
           {loading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-7 text-center text-sm" style={{ color: '#8888A8' }}>
         Already have an account?{' '}
-        <a href="/login" className="font-medium text-primary hover:underline">
+        <a href="/login" className="font-medium transition" style={{ color: '#00c8ff' }}>
           Sign in
         </a>
       </p>
@@ -197,25 +214,28 @@ interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 function Field({ label, error, hint, id, ...rest }: FieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-foreground">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium" style={{ color: '#C0C0D8' }}>
         {label}
       </label>
       <input
         id={id}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         aria-invalid={!!error}
-        className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-          error ? 'border-destructive' : 'border-input'
-        }`}
+        className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition"
+        style={{
+          background: '#1A1A2A',
+          border: error ? '1px solid rgba(239,68,68,0.6)' : '1px solid rgba(255,255,255,0.1)',
+          color: '#F0F0FA',
+        }}
         {...rest}
       />
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-destructive">
+        <p id={`${id}-error`} role="alert" className="mt-1 text-xs" style={{ color: '#F87171' }}>
           {error}
         </p>
       )}
       {!error && hint && (
-        <p id={`${id}-hint`} className="mt-1 text-xs text-muted-foreground">
+        <p id={`${id}-hint`} className="mt-1 text-xs" style={{ color: '#60607A' }}>
           {hint}
         </p>
       )}

@@ -97,30 +97,45 @@ function VerifyResult({ status }: { status: VerifyStatus }) {
   const isSuccess = status === 'success' || status === 'already-verified'
 
   return (
-    <div className="rounded-xl border border-border bg-card p-8 shadow-sm text-center">
-      <div className={`mb-4 flex justify-center`} aria-hidden="true">
+    <div
+      className="rounded-xl p-8 text-center"
+      style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+    >
+      <div className="mb-4 flex justify-center" aria-hidden="true">
         <span
-          className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl ${
-            isSuccess ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
-          }`}
+          className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
+          style={
+            isSuccess
+              ? { background: 'rgba(0,200,255,0.1)', color: '#00c8ff' }
+              : { background: 'rgba(239,68,68,0.1)', color: '#fca5a5' }
+          }
         >
           {isSuccess ? '✓' : '✕'}
         </span>
       </div>
 
-      <h2 className="mb-2 text-xl font-semibold">{title}</h2>
-      <p className="mb-6 text-sm text-muted-foreground">{body}</p>
+      <h2 className="mb-2 text-xl font-semibold" style={{ color: '#F0F0FA' }}>
+        {title}
+      </h2>
+      <p className="mb-6 text-sm" style={{ color: '#8888A8' }}>
+        {body}
+      </p>
 
       {cta && ctaHref ? (
         <Link
           href={ctaHref}
-          className="inline-block rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          className="inline-block rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
         >
           {cta}
         </Link>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          <Link href="/register" className="font-medium text-primary hover:underline">
+        <p className="text-sm" style={{ color: '#8888A8' }}>
+          <Link
+            href="/register"
+            className="font-medium hover:underline"
+            style={{ color: '#00c8ff' }}
+          >
             Register again
           </Link>
         </p>

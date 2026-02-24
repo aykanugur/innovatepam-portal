@@ -69,24 +69,41 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-      <h2 className="mb-1 text-xl font-semibold">Sign in</h2>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Welcome back — use your EPAM account to continue.
+    <div>
+      {/* Heading */}
+      <h2
+        className="mb-1 font-bold tracking-tight"
+        style={{ fontSize: '1.75rem', letterSpacing: '-0.03em', color: '#F0F0FA' }}
+      >
+        Welcome back
+      </h2>
+      <p className="mb-8 text-sm" style={{ color: '#8888A8' }}>
+        Sign in to your EPAM account to continue.
       </p>
 
+      {/* Server error banner */}
       {serverError && (
         <div
           role="alert"
-          className="mb-4 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          className="mb-5 rounded-lg px-4 py-3 text-sm"
+          style={{
+            background: 'rgba(239,68,68,0.12)',
+            color: '#F87171',
+            border: '1px solid rgba(239,68,68,0.25)',
+          }}
         >
           {serverError}
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        {/* Email */}
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
+          <label
+            htmlFor="email"
+            className="mb-1.5 block text-sm font-medium"
+            style={{ color: '#C0C0D8' }}
+          >
             Email
           </label>
           <input
@@ -94,23 +111,34 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
             name="email"
             type="email"
             autoComplete="email"
+            placeholder="you@epam.com"
             value={fields.email}
             onChange={handleChange}
             aria-invalid={!!fieldErrors.email}
             aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-            className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-              fieldErrors.email ? 'border-destructive' : 'border-input'
-            }`}
+            className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition"
+            style={{
+              background: '#1A1A2A',
+              border: fieldErrors.email
+                ? '1px solid rgba(239,68,68,0.6)'
+                : '1px solid rgba(255,255,255,0.1)',
+              color: '#F0F0FA',
+            }}
           />
           {fieldErrors.email && (
-            <p id="email-error" role="alert" className="mt-1 text-xs text-destructive">
+            <p id="email-error" role="alert" className="mt-1 text-xs" style={{ color: '#F87171' }}>
               {fieldErrors.email}
             </p>
           )}
         </div>
 
+        {/* Password */}
         <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
+          <label
+            htmlFor="password"
+            className="mb-1.5 block text-sm font-medium"
+            style={{ color: '#C0C0D8' }}
+          >
             Password
           </label>
           <input
@@ -118,33 +146,52 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
             name="password"
             type="password"
             autoComplete="current-password"
+            placeholder="••••••••"
             value={fields.password}
             onChange={handleChange}
             aria-invalid={!!fieldErrors.password}
             aria-describedby={fieldErrors.password ? 'password-error' : undefined}
-            className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-              fieldErrors.password ? 'border-destructive' : 'border-input'
-            }`}
+            className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition"
+            style={{
+              background: '#1A1A2A',
+              border: fieldErrors.password
+                ? '1px solid rgba(239,68,68,0.6)'
+                : '1px solid rgba(255,255,255,0.1)',
+              color: '#F0F0FA',
+            }}
           />
           {fieldErrors.password && (
-            <p id="password-error" role="alert" className="mt-1 text-xs text-destructive">
+            <p
+              id="password-error"
+              role="alert"
+              className="mt-1 text-xs"
+              style={{ color: '#F87171' }}
+            >
               {fieldErrors.password}
             </p>
           )}
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={isPending}
-          className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+          className="mt-2 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition"
+          style={{
+            background: isPending ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
+            opacity: isPending ? 0.7 : 1,
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 12px rgba(0,200,255,0.25)',
+          }}
         >
           {isPending ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        No account?{' '}
-        <a href="/register" className="font-medium text-primary hover:underline">
+      {/* Footer link */}
+      <p className="mt-7 text-center text-sm" style={{ color: '#8888A8' }}>
+        Don&apos;t have an account?{' '}
+        <a href="/register" className="font-medium transition" style={{ color: '#00c8ff' }}>
           Create one
         </a>
       </p>

@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * T015 — Idea card component.
  * Renders a summary card for a single idea: title, author, category label,
@@ -56,10 +58,26 @@ export default function IdeaCard({
   return (
     <Link
       href={`/ideas/${id}`}
-      className="block rounded-xl border border-border bg-card p-5 transition hover:border-ring hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="block rounded-2xl p-5 transition-all duration-200 group"
+      style={{
+        background: '#1A1A2A',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement
+        el.style.border = '1px solid rgba(0,200,255,0.25)'
+        el.style.boxShadow = '0 4px 20px rgba(0,200,255,0.08)'
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement
+        el.style.border = '1px solid rgba(255,255,255,0.08)'
+        el.style.boxShadow = 'none'
+      }}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
-        <h2 className="line-clamp-2 text-sm font-semibold text-foreground">{title}</h2>
+        <h2 className="line-clamp-2 text-sm font-semibold" style={{ color: '#F0F0FA' }}>
+          {title}
+        </h2>
         <span
           className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.bg} ${badge.text}`}
           aria-label={`Status: ${badge.label}`}
@@ -68,7 +86,10 @@ export default function IdeaCard({
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+      <div
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+        style={{ color: '#8888A8' }}
+      >
         <span>{authorName}</span>
         <span aria-hidden>·</span>
         <span>{categoryLabel}</span>

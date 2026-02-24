@@ -9,23 +9,23 @@ import type { IdeaStatus } from '@/lib/generated/prisma/client'
 export const STATUS_BADGE_CLASSES: Record<IdeaStatus, { bg: string; text: string; label: string }> =
   {
     SUBMITTED: {
-      bg: 'bg-gray-100',
-      text: 'text-gray-700',
+      bg: 'bg-white/[0.08]',
+      text: 'text-slate-300',
       label: 'Submitted',
     },
     UNDER_REVIEW: {
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-800',
+      bg: 'bg-amber-400/[0.15]',
+      text: 'text-amber-300',
       label: 'Under Review',
     },
     ACCEPTED: {
-      bg: 'bg-green-100',
-      text: 'text-green-800',
+      bg: 'bg-emerald-500/[0.15]',
+      text: 'text-emerald-300',
       label: 'Accepted',
     },
     REJECTED: {
-      bg: 'bg-red-100',
-      text: 'text-red-800',
+      bg: 'bg-red-500/[0.15]',
+      text: 'text-red-400',
       label: 'Rejected',
     },
   }

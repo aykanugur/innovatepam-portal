@@ -2,6 +2,8 @@
  * T021: Prisma seed script — promotes SUPERADMIN_EMAIL to SUPERADMIN role.
  * T030: Seeds sample ideas with varied statuses, categories, and visibilities
  *       for local development and testing.
+ * T041: Seeds IdeaReview rows for UNDER_REVIEW, ACCEPTED, and REJECTED ideas
+ *       so the admin dashboard and review pages show realistic data locally.
  * Run via: npm run db:seed
  */
 import { PrismaClient } from '../lib/generated/prisma/client'
@@ -113,14 +115,54 @@ async function main() {
     const existingIdeaCount = await prisma.idea.count()
     if (existingIdeaCount === 0) {
       for (const ideaData of SEED_IDEAS) {
-        await prisma.idea.create({
+        const idea = await prisma.idea.create({
           data: {
             ...ideaData,
             authorId: user.id,
           },
         })
+
+        // ── T041: Seed IdeaReview rows for non-SUBMITTED ideas ──────────────
+        if (ideaData.status === 'UNDER_REVIEW') {
+          await prisma.ideaReview.create({
+            data: {
+              ideaId: idea.id,
+              reviewerId: user.id,
+              startedAt: new Date(),
+              // decision and decidedAt are null — review in progress
+            },
+          })
+        } else if (ideaData.status === 'ACCEPTED') {
+          const startedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+          const decidedAt = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+          await prisma.ideaReview.create({
+            data: {
+              ideaId: idea.id,
+              reviewerId: user.id,
+              startedAt,
+              decision: 'ACCEPTED',
+              comment:
+                'Excellent proposal with clear cost-benefit analysis. Approved for implementation in Q2.',
+              decidedAt,
+            },
+          })
+        } else if (ideaData.status === 'REJECTED') {
+          const startedAt = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
+          const decidedAt = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) // 4 days ago
+          await prisma.ideaReview.create({
+            data: {
+              ideaId: idea.id,
+              reviewerId: user.id,
+              startedAt,
+              decision: 'REJECTED',
+              comment:
+                'While creative, this initiative falls outside our current strategic priorities. Please resubmit in the next planning cycle with a revised scope.',
+              decidedAt,
+            },
+          })
+        }
       }
-      console.log(`\nSeeded ${SEED_IDEAS.length} sample ideas for local development.`)
+      console.log(`\nSeeded ${SEED_IDEAS.length} sample ideas with matching IdeaReview rows.`)
     } else {
       console.log(`\nSkipping idea seed — ${existingIdeaCount} ideas already exist.`)
     }

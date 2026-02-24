@@ -2,18 +2,13 @@
  * T023: Admin users page — SUPERADMIN only, feature-flagged.
  * Shows user table with RoleSelector for each non-self user.
  */
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { RoleSelector } from '@/components/auth/role-selector'
 import Link from 'next/link'
 
 export default async function AdminUsersPage() {
-  // Feature flag guard
-  if (process.env.FEATURE_USER_MANAGEMENT_ENABLED !== 'true') {
-    notFound()
-  }
-
   const session = await auth()
 
   if (!session?.user?.id) {
@@ -43,67 +38,177 @@ export default async function AdminUsersPage() {
   })
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <header className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="mt-1 text-sm text-gray-500">{users.length} users total</p>
-          </div>
-          <Link href="/admin" className="text-sm text-blue-600 hover:underline">
-            ← Back to Admin
-          </Link>
-        </header>
+    <div
+      className="min-h-screen text-white"
+      style={{ background: '#060608', fontFamily: 'var(--font-sora), sans-serif' }}
+    >
+      {/* Ambient bg */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+        <div
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 50% at 90% 0%, rgba(0,200,255,0.08) 0%, transparent 60%)',
+          }}
+          className="absolute inset-0"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+      </div>
 
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">ID</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">Email</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">Display Name</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">Role</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">Verified</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">Created</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">Change Role</th>
+      {/* Nav */}
+      <header
+        className="sticky top-0 z-50 flex items-center justify-between px-8 py-3.5"
+        style={{
+          background: 'rgba(6,6,8,0.85)',
+          backdropFilter: 'blur(18px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
+              &lt;epam&gt;
+            </span>
+            <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>
+          </Link>
+          <Link href="/admin" className="text-sm text-gray-400 hover:text-white transition-colors">
+            Admin
+          </Link>
+          <span className="text-sm font-medium" style={{ color: '#00c8ff' }}>
+            Users
+          </span>
+        </div>
+        <Link href="/admin" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+          ← Back to Admin
+        </Link>
+      </header>
+
+      <main className="relative z-10 mx-auto max-w-6xl px-6 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <h1
+            className="font-bold text-white mb-1"
+            style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', letterSpacing: '-0.03em' }}
+          >
+            User{' '}
+            <span
+              style={{
+                background: 'linear-gradient(90deg, #00c8ff, #a855f7)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Management
+            </span>
+          </h1>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {users.length} users total
+          </p>
+        </div>
+
+        {/* Table */}
+        <div
+          className="overflow-x-auto rounded-2xl"
+          style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                {['ID', 'Email', 'Display Name', 'Role', 'Verified', 'Created', 'Change Role'].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-xs font-semibold"
+                      style={{ color: 'rgba(255,255,255,0.45)' }}
+                    >
+                      {h}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {users.map((user) => {
+            <tbody>
+              {users.map((user, i) => {
                 const isSelf = user.id === session.user?.id
                 return (
-                  <tr key={user.id} className={isSelf ? 'bg-blue-50' : 'hover:bg-gray-50'}>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-400 max-w-[120px] truncate">
+                  <tr
+                    key={user.id}
+                    style={{
+                      background: isSelf
+                        ? 'rgba(0,200,255,0.05)'
+                        : i % 2 === 0
+                          ? 'rgba(255,255,255,0.015)'
+                          : 'transparent',
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    <td
+                      className="px-4 py-3 font-mono text-xs max-w-[120px] truncate"
+                      style={{ color: 'rgba(255,255,255,0.25)' }}
+                    >
                       {user.id}
                     </td>
-                    <td className="px-4 py-3 text-gray-800">{user.email}</td>
-                    <td className="px-4 py-3 text-gray-700">{user.displayName}</td>
+                    <td className="px-4 py-3" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                      {user.email}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      {user.displayName}
+                    </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          user.role === 'SUPERADMIN'
-                            ? 'bg-purple-100 text-purple-700'
-                            : user.role === 'ADMIN'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-gray-100 text-gray-600'
-                        }`}
+                        className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+                        style={{
+                          background:
+                            user.role === 'SUPERADMIN'
+                              ? 'rgba(168,85,247,0.15)'
+                              : user.role === 'ADMIN'
+                                ? 'rgba(0,200,255,0.12)'
+                                : 'rgba(255,255,255,0.06)',
+                          border:
+                            user.role === 'SUPERADMIN'
+                              ? '1px solid rgba(168,85,247,0.35)'
+                              : user.role === 'ADMIN'
+                                ? '1px solid rgba(0,200,255,0.3)'
+                                : '1px solid rgba(255,255,255,0.1)',
+                          color:
+                            user.role === 'SUPERADMIN'
+                              ? '#c084fc'
+                              : user.role === 'ADMIN'
+                                ? '#00c8ff'
+                                : 'rgba(255,255,255,0.5)',
+                        }}
                       >
                         {user.role}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {user.emailVerified ? (
-                        <span className="text-green-600">✓</span>
+                        <span style={{ color: '#10b981' }}>✓</span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                    <td className="px-4 py-3 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       {user.createdAt.toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
                       {isSelf || user.role === 'SUPERADMIN' ? (
-                        <span className="text-xs text-gray-400 italic">
+                        <span
+                          className="text-xs italic"
+                          style={{ color: 'rgba(255,255,255,0.25)' }}
+                        >
                           {isSelf ? 'You' : 'Protected'}
                         </span>
                       ) : (
@@ -116,7 +221,7 @@ export default async function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
