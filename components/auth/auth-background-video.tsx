@@ -1,33 +1,44 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
+
+const VIDEOS = ['/auth-video.mp4', '/auth-video-2.mp4']
+const PLAYBACK_RATE = 0.3
 
 /**
- * Slow-looping muted background video for the auth split-panel.
- * playbackRate is set via JS — can't be done with HTML attributes alone.
+ * Alternates between two background videos at 30% playback speed.
+ * Video 1 plays → ends → Video 2 plays → ends → Video 1 … (infinite)
  */
 export function AuthBackgroundVideo() {
+  const [index, setIndex] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  useEffect(() => {
+  // Called every time the <video> element is ready to play
+  const applySpeed = useCallback(() => {
     const vid = videoRef.current
     if (!vid) return
-    // Slow the video to 40% speed for a calm ambient effect
-    vid.playbackRate = 0.4
+    vid.playbackRate = PLAYBACK_RATE
+  }, [])
+
+  // When current video ends, swap to the other one
+  const handleEnded = useCallback(() => {
+    setIndex((prev) => (prev + 1) % VIDEOS.length)
   }, [])
 
   return (
     <video
       ref={videoRef}
+      key={index} // remounts the element so the new src loads automatically
       autoPlay
       muted
-      loop
       playsInline
+      onCanPlay={applySpeed}
+      onEnded={handleEnded}
       className="absolute inset-0 w-full h-full object-cover"
       style={{ opacity: 0.5, filter: 'saturate(1.3) brightness(0.7)' }}
       aria-hidden
     >
-      <source src="/auth-video.mp4" type="video/mp4" />
+      <source src={VIDEOS[index]} type="video/mp4" />
     </video>
   )
 }
