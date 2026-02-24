@@ -128,7 +128,7 @@ export default function IdeaDetail({
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium transition hover:opacity-80"
-              style={{ color: '#FF6B00' }}
+              style={{ color: '#00c8ff' }}
             >
               Download Attachment →
             </a>

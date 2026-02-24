@@ -149,7 +149,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {/* Mobile-only logo */}
         <div className="lg:hidden absolute top-6 left-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-base" style={{ color: '#FF6B00' }}>
+            <span className="font-bold text-base" style={{ color: '#00c8ff' }}>
               &lt;epam&gt;
             </span>
             <span className="font-semibold text-base" style={{ color: '#F0F0FA' }}>

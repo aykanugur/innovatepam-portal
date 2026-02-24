@@ -43,8 +43,8 @@ export default async function MyIdeasPage() {
           href="/ideas/new"
           className="rounded-full px-5 py-2 text-sm font-semibold text-white transition"
           style={{
-            background: 'linear-gradient(135deg, #FF6B00, #FF8C38)',
-            boxShadow: '0 2px 12px rgba(255,107,0,0.3)',
+            background: 'linear-gradient(135deg, #00c8ff, #0070f3)',
+            boxShadow: '0 2px 12px rgba(0,200,255,0.2)',
           }}
         >
           Submit Idea
@@ -63,8 +63,8 @@ export default async function MyIdeasPage() {
             href="/ideas/new"
             className="rounded-full px-5 py-2 text-sm font-semibold text-white transition"
             style={{
-              background: 'linear-gradient(135deg, #FF6B00, #FF8C38)',
-              boxShadow: '0 2px 12px rgba(255,107,0,0.3)',
+              background: 'linear-gradient(135deg, #00c8ff, #0070f3)',
+              boxShadow: '0 2px 12px rgba(0,200,255,0.2)',
             }}
           >
             Submit Your First Idea

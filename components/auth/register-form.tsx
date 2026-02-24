@@ -183,10 +183,10 @@ export function RegisterForm() {
           disabled={loading}
           className="mt-2 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition"
           style={{
-            background: loading ? '#CC5500' : 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+            background: loading ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
             opacity: loading ? 0.7 : 1,
             cursor: loading ? 'not-allowed' : 'pointer',
-            boxShadow: '0 2px 12px rgba(255,107,0,0.35)',
+            boxShadow: '0 2px 12px rgba(0,200,255,0.25)',
           }}
         >
           {loading ? 'Creating account…' : 'Create account'}
@@ -195,7 +195,7 @@ export function RegisterForm() {
 
       <p className="mt-7 text-center text-sm" style={{ color: '#8888A8' }}>
         Already have an account?{' '}
-        <a href="/login" className="font-medium transition" style={{ color: '#FF6B00' }}>
+        <a href="/login" className="font-medium transition" style={{ color: '#00c8ff' }}>
           Sign in
         </a>
       </p>

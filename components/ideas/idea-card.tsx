@@ -63,8 +63,8 @@ export default function IdeaCard({
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement
-        el.style.border = '1px solid rgba(255,107,0,0.35)'
-        el.style.boxShadow = '0 4px 20px rgba(255,107,0,0.1)'
+        el.style.border = '1px solid rgba(0,200,255,0.25)'
+        el.style.boxShadow = '0 4px 20px rgba(0,200,255,0.08)'
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement

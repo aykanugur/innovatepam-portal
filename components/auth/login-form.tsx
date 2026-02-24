@@ -178,10 +178,10 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
           disabled={isPending}
           className="mt-2 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition"
           style={{
-            background: isPending ? '#CC5500' : 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+            background: isPending ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
             opacity: isPending ? 0.7 : 1,
             cursor: isPending ? 'not-allowed' : 'pointer',
-            boxShadow: '0 2px 12px rgba(255,107,0,0.35)',
+            boxShadow: '0 2px 12px rgba(0,200,255,0.25)',
           }}
         >
           {isPending ? 'Signing in…' : 'Sign in'}
@@ -191,7 +191,7 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
       {/* Footer link */}
       <p className="mt-7 text-center text-sm" style={{ color: '#8888A8' }}>
         Don&apos;t have an account?{' '}
-        <a href="/register" className="font-medium transition" style={{ color: '#FF6B00' }}>
+        <a href="/register" className="font-medium transition" style={{ color: '#00c8ff' }}>
           Create one
         </a>
       </p>

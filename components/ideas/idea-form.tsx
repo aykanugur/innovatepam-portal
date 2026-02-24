@@ -327,7 +327,7 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
                 checked={form.visibility === value}
                 onChange={handleChange}
                 className="h-4 w-4"
-                style={{ accentColor: '#FF6B00' }}
+                style={{ accentColor: '#00c8ff' }}
               />
               <span className="text-sm" style={{ color: '#F0F0FA' }}>
                 {value === 'PUBLIC' ? 'Public' : 'Private'}
@@ -386,9 +386,9 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
         disabled={submitting}
         className="w-full rounded-full py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
         style={{
-          background: submitting ? '#CC5500' : 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+          background: submitting ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
           opacity: submitting ? 0.7 : 1,
-          boxShadow: '0 2px 16px rgba(255,107,0,0.3)',
+          boxShadow: '0 2px 16px rgba(0,200,255,0.2)',
         }}
       >
         {submitting ? 'Submitting…' : 'Submit Idea'}

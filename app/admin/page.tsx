@@ -111,7 +111,7 @@ export default async function AdminPage() {
       >
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-bold text-base tracking-tight" style={{ color: '#FF6B00' }}>
+            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
               &lt;epam&gt;
             </span>
             <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>
