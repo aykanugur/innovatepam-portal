@@ -38,7 +38,8 @@ export default function AdminDeleteButton({ ideaId }: AdminDeleteButtonProps) {
         <AlertDialog.Trigger asChild>
           <button
             type="button"
-            className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:border-red-300"
+            className="rounded-full px-5 py-2 text-sm font-medium transition"
+            style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#F87171' }}
           >
             Delete Idea (Admin)
           </button>
@@ -47,12 +48,15 @@ export default function AdminDeleteButton({ ideaId }: AdminDeleteButtonProps) {
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0" />
 
-          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-background p-6 shadow-xl focus:outline-none">
-            <AlertDialog.Title className="text-base font-semibold text-foreground">
+          <AlertDialog.Content
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 shadow-2xl focus:outline-none"
+            style={{ background: '#16162A', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <AlertDialog.Title className="text-base font-semibold" style={{ color: '#F0F0FA' }}>
               Delete this idea?
             </AlertDialog.Title>
 
-            <AlertDialog.Description className="mt-2 text-sm text-muted-foreground">
+            <AlertDialog.Description className="mt-2 text-sm" style={{ color: '#8888A8' }}>
               As an admin you can delete this idea. This action cannot be undone.
             </AlertDialog.Description>
 
@@ -61,7 +65,8 @@ export default function AdminDeleteButton({ ideaId }: AdminDeleteButtonProps) {
                 <button
                   type="button"
                   disabled={loading}
-                  className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+                  className="rounded-full px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+                  style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#A0A0BC' }}
                 >
                   Cancel
                 </button>
@@ -72,7 +77,8 @@ export default function AdminDeleteButton({ ideaId }: AdminDeleteButtonProps) {
                   type="button"
                   onClick={handleDelete}
                   disabled={loading}
-                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{ background: 'rgba(239,68,68,0.85)' }}
                 >
                   {loading ? 'Deleting…' : 'Delete'}
                 </button>
@@ -82,11 +88,11 @@ export default function AdminDeleteButton({ ideaId }: AdminDeleteButtonProps) {
         </AlertDialog.Portal>
       </AlertDialog.Root>
 
-      {error && (
-        <p role="alert" className="text-xs text-red-600">
+      {error ? (
+        <p role="alert" className="text-xs" style={{ color: '#F87171' }}>
           {error}
         </p>
-      )}
+      ) : null}
     </div>
   )
 }

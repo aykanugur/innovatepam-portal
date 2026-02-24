@@ -83,15 +83,21 @@ export default async function IdeasPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Ideas</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
+            Ideas
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: '#8888A8' }}>
             {totalItems} idea{totalItems !== 1 ? 's' : ''} total
           </p>
         </div>
 
         <Link
           href="/ideas/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          className="rounded-full px-5 py-2 text-sm font-semibold text-white transition"
+          style={{
+            background: 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+            boxShadow: '0 2px 12px rgba(255,107,0,0.3)',
+          }}
         >
           Submit Idea
         </Link>

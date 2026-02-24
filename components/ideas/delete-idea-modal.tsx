@@ -56,7 +56,8 @@ export default function DeleteIdeaModal({ ideaId, userDisplayName }: DeleteIdeaM
       <Dialog.Trigger asChild>
         <button
           type="button"
-          className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:border-red-300"
+          className="rounded-full px-5 py-2 text-sm font-medium transition"
+          style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#F87171' }}
         >
           Delete Idea
         </button>
@@ -66,20 +67,25 @@ export default function DeleteIdeaModal({ ideaId, userDisplayName }: DeleteIdeaM
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0" />
 
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-background p-6 shadow-xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 shadow-2xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95"
+          style={{ background: '#16162A', border: '1px solid rgba(255,255,255,0.1)' }}
           aria-describedby="delete-modal-description"
         >
-          <Dialog.Title className="text-base font-semibold text-foreground">
+          <Dialog.Title className="text-base font-semibold" style={{ color: '#F0F0FA' }}>
             Delete this idea?
           </Dialog.Title>
 
-          <p id="delete-modal-description" className="mt-2 text-sm text-muted-foreground">
+          <p id="delete-modal-description" className="mt-2 text-sm" style={{ color: '#8888A8' }}>
             This action cannot be undone. To confirm, type your display name{' '}
-            <strong className="text-foreground">{userDisplayName}</strong> below.
+            <strong style={{ color: '#F0F0FA' }}>{userDisplayName}</strong> below.
           </p>
 
           <div className="mt-4 space-y-1">
-            <label htmlFor="confirm-name" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="confirm-name"
+              className="block text-sm font-medium"
+              style={{ color: '#C0C0D8' }}
+            >
               Your display name
             </label>
             <input
@@ -89,23 +95,34 @@ export default function DeleteIdeaModal({ ideaId, userDisplayName }: DeleteIdeaM
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={userDisplayName}
               autoComplete="off"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition"
+              style={{
+                background: '#1A1A2A',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#F0F0FA',
+              }}
               aria-describedby={error ? 'delete-modal-error' : undefined}
             />
           </div>
 
-          {error && (
-            <p id="delete-modal-error" role="alert" className="mt-2 text-xs text-red-600">
+          {error ? (
+            <p
+              id="delete-modal-error"
+              role="alert"
+              className="mt-2 text-xs"
+              style={{ color: '#F87171' }}
+            >
               {error}
             </p>
-          )}
+          ) : null}
 
           <div className="mt-6 flex justify-end gap-3">
             <Dialog.Close asChild>
               <button
                 type="button"
                 disabled={loading}
-                className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+                className="rounded-full px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+                style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#A0A0BC' }}
               >
                 Cancel
               </button>
@@ -115,7 +132,8 @@ export default function DeleteIdeaModal({ ideaId, userDisplayName }: DeleteIdeaM
               type="button"
               onClick={handleConfirm}
               disabled={!isConfirmed || loading}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ background: 'rgba(239,68,68,0.85)' }}
             >
               {loading ? 'Deleting…' : 'Confirm Delete'}
             </button>

@@ -49,13 +49,20 @@ export default function IdeaList({ ideas, meta, searchParams }: IdeaListProps) {
 
   if (ideas.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card py-16 text-center">
-        <p className="mb-4 text-sm text-muted-foreground">
+      <div
+        className="flex flex-col items-center justify-center rounded-2xl py-16 text-center"
+        style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <p className="mb-4 text-sm" style={{ color: '#8888A8' }}>
           No ideas found. Be the first to submit one!
         </p>
         <Link
           href="/ideas/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          className="rounded-full px-5 py-2 text-sm font-semibold text-white transition"
+          style={{
+            background: 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+            boxShadow: '0 2px 12px rgba(255,107,0,0.3)',
+          }}
         >
           Submit Idea
         </Link>
@@ -87,34 +94,38 @@ export default function IdeaList({ ideas, meta, searchParams }: IdeaListProps) {
           {hasPrev ? (
             <Link
               href={buildPageUrl(searchParams, page - 1)}
-              className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
+              className="rounded-full px-4 py-1.5 text-sm font-medium text-white transition"
+              style={{ border: '1px solid rgba(255,255,255,0.12)', color: '#C0C0D8' }}
             >
               ← Previous
             </Link>
           ) : (
             <span
               aria-disabled="true"
-              className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-muted-foreground opacity-50"
+              className="rounded-full px-4 py-1.5 text-sm font-medium opacity-30"
+              style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#60607A' }}
             >
               ← Previous
             </span>
           )}
 
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm" style={{ color: '#8888A8' }}>
             Page {page} of {totalPages}
           </span>
 
           {hasNext ? (
             <Link
               href={buildPageUrl(searchParams, page + 1)}
-              className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
+              className="rounded-full px-4 py-1.5 text-sm font-medium transition"
+              style={{ border: '1px solid rgba(255,255,255,0.12)', color: '#C0C0D8' }}
             >
               Next →
             </Link>
           ) : (
             <span
               aria-disabled="true"
-              className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-muted-foreground opacity-50"
+              className="rounded-full px-4 py-1.5 text-sm font-medium opacity-30"
+              style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#60607A' }}
             >
               Next →
             </span>

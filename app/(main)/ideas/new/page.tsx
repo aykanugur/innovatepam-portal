@@ -23,14 +23,19 @@ export default async function SubmitIdeaPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Submit an Idea</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
+          Submit an Idea
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: '#8888A8' }}>
           Share your idea with the InnovatEPAM community. Public ideas are visible to all employees;
           private ideas are visible only to you and admins.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6">
+      <div
+        className="rounded-2xl p-6"
+        style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
         <IdeaForm attachmentEnabled={attachmentEnabled} />
       </div>
     </div>

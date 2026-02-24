@@ -37,19 +37,26 @@ export default function CategoryFilter({ currentCategory }: CategoryFilterProps)
   )
 
   return (
-    <div className="flex items-center gap-2">
-      <label htmlFor="category-filter" className="text-sm font-medium text-foreground">
+    <div className="flex items-center gap-3">
+      <label htmlFor="category-filter" className="text-sm font-medium" style={{ color: '#A0A0BC' }}>
         Category
       </label>
       <select
         id="category-filter"
         value={currentCategory ?? ''}
         onChange={handleChange}
-        className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        className="rounded-full px-4 py-1.5 text-sm outline-none transition"
+        style={{
+          background: '#1A1A2A',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: '#F0F0FA',
+        }}
       >
-        <option value="">All categories</option>
+        <option value="" style={{ background: '#1A1A2A' }}>
+          All categories
+        </option>
         {CATEGORIES.map(({ slug, label }) => (
-          <option key={slug} value={slug}>
+          <option key={slug} value={slug} style={{ background: '#1A1A2A' }}>
             {label}
           </option>
         ))}

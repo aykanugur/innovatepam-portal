@@ -32,27 +32,40 @@ export default async function MyIdeasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Ideas</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
+            My Ideas
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: '#8888A8' }}>
             Your submitted ideas — both public and private.
           </p>
         </div>
         <Link
           href="/ideas/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          className="rounded-full px-5 py-2 text-sm font-semibold text-white transition"
+          style={{
+            background: 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+            boxShadow: '0 2px 12px rgba(255,107,0,0.3)',
+          }}
         >
           Submit Idea
         </Link>
       </div>
 
       {ideas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card py-16 text-center">
-          <p className="mb-4 text-sm text-muted-foreground">
+        <div
+          className="flex flex-col items-center justify-center rounded-2xl py-16 text-center"
+          style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <p className="mb-4 text-sm" style={{ color: '#8888A8' }}>
             You haven&apos;t submitted any ideas yet.
           </p>
           <Link
             href="/ideas/new"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            className="rounded-full px-5 py-2 text-sm font-semibold text-white transition"
+            style={{
+              background: 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+              boxShadow: '0 2px 12px rgba(255,107,0,0.3)',
+            }}
           >
             Submit Your First Idea
           </Link>
