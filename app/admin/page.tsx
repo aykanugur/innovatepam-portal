@@ -69,21 +69,102 @@ export default async function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <header>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Signed in as <span className="font-medium">{dbUser.displayName ?? dbUser.email}</span> —{' '}
-            <span className="font-medium">{dbUser.role}</span>
-          </p>
-        </header>
+    <div
+      className="min-h-screen text-white"
+      style={{ background: '#060608', fontFamily: 'var(--font-sora), sans-serif' }}
+    >
+      {/* Ambient bg */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+        <div
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 50% at 85% 0%, rgba(255,59,92,0.12) 0%, transparent 60%)',
+          }}
+          className="absolute inset-0"
+        />
+        <div
+          style={{
+            background:
+              'radial-gradient(ellipse 50% 40% at 5% 90%, rgba(139,92,246,0.1) 0%, transparent 60%)',
+          }}
+          className="absolute inset-0"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+      </div>
 
-        {/* Stats overview */}
+      {/* Nav */}
+      <header
+        className="sticky top-0 z-50 flex items-center justify-between px-8 py-3.5"
+        style={{
+          background: 'rgba(6,6,8,0.85)',
+          backdropFilter: 'blur(18px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
+              &lt;epam&gt;
+            </span>
+            <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>
+          </Link>
+          <span className="text-sm font-medium" style={{ color: '#ff3b5c' }}>
+            Admin
+          </span>
+        </div>
+        <Link
+          href="/dashboard"
+          className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          ← Dashboard
+        </Link>
+      </header>
+
+      <main className="relative z-10 mx-auto max-w-4xl px-6 py-12 space-y-10">
+        {/* Header */}
+        <div>
+          <div
+            className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full text-xs font-medium"
+            style={{
+              background: 'rgba(255,59,92,0.1)',
+              border: '1px solid rgba(255,59,92,0.25)',
+              color: '#ff3b5c',
+            }}
+          >
+            🛡️ {dbUser.role}
+          </div>
+          <h1
+            className="font-bold text-white"
+            style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', letterSpacing: '-0.03em' }}
+          >
+            Admin{' '}
+            <span
+              style={{
+                background: 'linear-gradient(90deg, #ff3b5c, #a855f7)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Dashboard
+            </span>
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {dbUser.displayName ?? dbUser.email}
+          </p>
+        </div>
+
+        {/* Stats */}
         <DashboardStats stats={stats} />
 
-        {/* Pending review queue */}
+        {/* Pending queue */}
         <PendingQueue
           ideas={pendingIdeas.map((idea) => ({
             id: idea.id,
@@ -94,41 +175,56 @@ export default async function AdminPage() {
           }))}
         />
 
-        {/* Extra admin actions */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {isSuperAdmin && process.env.FEATURE_USER_MANAGEMENT_ENABLED === 'true' && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-800">User Management</h2>
-              <p className="mt-2 text-sm text-gray-500">Manage user roles and platform access.</p>
+        {/* SuperAdmin actions */}
+        {isSuperAdmin && (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {[
+              {
+                href: '/admin/users',
+                icon: '👥',
+                label: 'User Management',
+                desc: 'Manage user roles and platform access.',
+                glow: '#00c8ff',
+              },
+              {
+                href: '/admin/analytics',
+                icon: '📊',
+                label: 'Analytics',
+                desc: 'Submission trends and category insights.',
+                glow: '#a855f7',
+              },
+            ].map(({ href, icon, label, desc, glow }) => (
               <Link
-                href="/admin/users"
-                className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                key={href}
+                href={href}
+                className="group rounded-2xl p-6 transition-all duration-300"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  el.style.background = 'rgba(255,255,255,0.05)'
+                  el.style.border = `1px solid ${glow}40`
+                  el.style.boxShadow = `0 4px 24px ${glow}15`
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  el.style.background = 'rgba(255,255,255,0.03)'
+                  el.style.border = '1px solid rgba(255,255,255,0.07)'
+                  el.style.boxShadow = ''
+                }}
               >
-                Manage Users
+                <div className="mb-3 text-2xl">{icon}</div>
+                <h2 className="mb-1 text-sm font-semibold text-white">{label}</h2>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {desc}
+                </p>
               </Link>
-            </div>
-          )}
-
-          {isSuperAdmin && process.env.FEATURE_ANALYTICS_ENABLED === 'true' && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-800">Analytics</h2>
-              <p className="mt-2 text-sm text-gray-500">Submission trends and category insights.</p>
-              <Link
-                href="/admin/analytics"
-                className="mt-4 inline-block rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
-              >
-                View Analytics
-              </Link>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
-            ← Back to Dashboard
-          </Link>
-        </div>
-      </div>
-    </main>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
   )
 }

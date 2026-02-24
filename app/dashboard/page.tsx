@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { logoutAction } from '@/lib/actions/logout'
@@ -6,11 +7,6 @@ export const metadata = {
   title: 'Dashboard — InnovatEPAM',
 }
 
-/**
- * Protected landing page for all authenticated users.
- * proxy.ts redirects unauthenticated requests here → /login before this
- * component renders. This defensive check handles direct RSC invocations.
- */
 export default async function DashboardPage() {
   const session = await auth()
   if (!session) redirect('/login')
@@ -21,44 +17,213 @@ export default async function DashboardPage() {
     role: session.user.role ?? 'SUBMITTER',
   }
 
+  const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN'
+
+  const cards = [
+    {
+      href: '/ideas/new',
+      icon: '💡',
+      label: 'Submit an Idea',
+      desc: 'Share your innovation with the team.',
+      glow: '#00c8ff',
+    },
+    {
+      href: '/ideas',
+      icon: '🔍',
+      label: 'Browse Ideas',
+      desc: 'Explore ideas submitted by the community.',
+      glow: '#a855f7',
+    },
+    {
+      href: '/my-ideas',
+      icon: '📋',
+      label: 'My Ideas',
+      desc: 'Track the status of your submissions.',
+      glow: '#10b981',
+    },
+    {
+      href: '/settings',
+      icon: '⚙️',
+      label: 'Settings',
+      desc: 'Update your display name and password.',
+      glow: '#f59e0b',
+    },
+    ...(isAdmin
+      ? [
+          {
+            href: '/admin',
+            icon: '🛡️',
+            label: 'Admin Dashboard',
+            desc: 'Review ideas and manage the portal.',
+            glow: '#ff3b5c',
+          },
+        ]
+      : []),
+  ]
+
   return (
-    <main className="min-h-screen bg-background">
-      {/* Top nav */}
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <span className="font-semibold text-foreground">InnovatEPAM</span>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+    <div
+      className="min-h-screen text-white"
+      style={{ background: '#060608', fontFamily: 'var(--font-sora), sans-serif' }}
+    >
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+        <div
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 50% at 80% 10%, rgba(139,92,246,0.18) 0%, transparent 65%)',
+          }}
+          className="absolute inset-0"
+        />
+        <div
+          style={{
+            background:
+              'radial-gradient(ellipse 50% 40% at 10% 80%, rgba(0,200,255,0.1) 0%, transparent 60%)',
+          }}
+          className="absolute inset-0"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+      </div>
+
+      {/* Nav */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-3.5"
+        style={{
+          background: 'rgba(6,6,8,0.85)',
+          backdropFilter: 'blur(18px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <nav className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
+              &lt;epam&gt;
+            </span>
+            <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>
+          </Link>
+          <Link href="/ideas" className="text-sm text-gray-400 hover:text-white transition-colors">
+            Browse
+          </Link>
+          <Link
+            href="/ideas/new"
+            className="text-sm text-gray-400 hover:text-white transition-colors"
           >
-            Sign out
-          </button>
-        </form>
+            Submit
+          </Link>
+          <Link
+            href="/my-ideas"
+            className="text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            My Ideas
+          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Admin
+            </Link>
+          )}
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/settings"
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            {displayName}
+          </Link>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="rounded-full px-3.5 py-1.5 text-xs font-medium text-gray-400 transition hover:text-white"
+              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </header>
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="mb-1 text-2xl font-bold">Welcome, {displayName}</h1>
-        <p className="mb-8 text-sm text-muted-foreground">
-          {email} &middot;{' '}
-          <span className="capitalize">{role.toLowerCase().replace('_', ' ')}</span>
-        </p>
-
-        <div className="rounded-xl border border-border bg-card p-6">
-          <p className="text-sm text-muted-foreground">
-            The innovation portal is open. Idea submission and review features are coming soon.
+      <main className="relative z-10 mx-auto max-w-4xl px-6 pt-32 pb-16">
+        {/* Welcome */}
+        <div className="mb-12">
+          <div
+            className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full text-xs font-medium"
+            style={{
+              background: 'rgba(0,200,255,0.08)',
+              border: '1px solid rgba(0,200,255,0.2)',
+              color: '#00c8ff',
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00c8ff] animate-pulse" />
+            <span className="capitalize">{role.toLowerCase().replace('_', ' ')}</span>
+          </div>
+          <h1
+            className="mb-2 font-bold text-white"
+            style={{
+              fontSize: 'clamp(1.8rem, 3vw, 2.6rem)',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.15,
+            }}
+          >
+            Welcome back,{' '}
+            <span
+              style={{
+                background: 'linear-gradient(90deg, #00c8ff, #a855f7)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              {displayName}
+            </span>
+          </h1>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {email}
           </p>
         </div>
 
-        {(role === 'ADMIN' || role === 'SUPERADMIN') && (
-          <div className="mt-4 rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-2 text-sm font-semibold">Admin</h2>
-            <a href="/admin" className="text-sm font-medium text-primary hover:underline">
-              Go to admin dashboard →
-            </a>
-          </div>
-        )}
-      </div>
-    </main>
+        {/* Cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map(({ href, icon, label, desc, glow }) => (
+            <Link
+              key={href}
+              href={href}
+              className="group relative rounded-2xl p-6 transition-all duration-300"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLAnchorElement
+                el.style.background = 'rgba(255,255,255,0.055)'
+                el.style.border = `1px solid ${glow}44`
+                el.style.boxShadow = `0 4px 24px ${glow}18`
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLAnchorElement
+                el.style.background = 'rgba(255,255,255,0.03)'
+                el.style.border = '1px solid rgba(255,255,255,0.07)'
+                el.style.boxShadow = ''
+              }}
+            >
+              <div className="mb-3 text-2xl">{icon}</div>
+              <h2 className="mb-1 text-sm font-semibold text-white">{label}</h2>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {desc}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </main>
+    </div>
   )
 }
