@@ -68,8 +68,11 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
-        <Link href="/ideas" className="text-sm transition" style={{ color: '#8888A8' }}>
-          ← Back to ideas
+        <Link
+          href="/ideas"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[#8888A8] bg-white/[0.04] border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-200"
+        >
+          ← Browse Ideas
         </Link>
       </div>
 

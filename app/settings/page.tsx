@@ -8,6 +8,7 @@
  */
 
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { DisplayNameForm } from '@/components/settings/display-name-form'
@@ -37,6 +38,16 @@ export default async function SettingsPage() {
   return (
     <main className="min-h-screen py-10" style={{ background: '#060608' }}>
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+        {/* Back */}
+        <div className="mb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[#8888A8] bg-white/[0.04] border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-200"
+          >
+            ← Back to Dashboard
+          </Link>
+        </div>
+
         {/* Page header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>

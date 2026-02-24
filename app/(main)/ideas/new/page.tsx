@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { auth } from '@/auth'
 import IdeaForm from '@/components/ideas/idea-form'
 import type { Metadata } from 'next'
@@ -22,6 +23,16 @@ export default async function SubmitIdeaPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Back */}
+      <div className="mb-6">
+        <Link
+          href="/ideas"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[#8888A8] bg-white/[0.04] border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-200"
+        >
+          ← Browse Ideas
+        </Link>
+      </div>
+
       <div className="mb-8">
         <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
           Submit an Idea

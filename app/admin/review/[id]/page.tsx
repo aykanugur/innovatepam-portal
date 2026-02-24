@@ -147,10 +147,9 @@ export default async function AdminReviewPage({ params }: PageProps) {
         <div>
           <Link
             href="/admin"
-            className="text-sm transition-colors hover:text-white"
-            style={{ color: '#8888A8' }}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[#8888A8] bg-white/[0.04] border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-200"
           >
-            ← Back to Admin Dashboard
+            ← Back to Admin
           </Link>
         </div>
       </div>

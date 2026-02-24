@@ -30,6 +30,16 @@ export default async function MyIdeasPage() {
 
   return (
     <div className="space-y-6">
+      {/* Back */}
+      <div>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[#8888A8] bg-white/[0.04] border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-200"
+        >
+          ← Dashboard
+        </Link>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#F0F0FA' }}>
