@@ -31,9 +31,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       {verified === '1' && (
         <div
           role="status"
-          className="mb-4 rounded-md bg-primary/10 px-4 py-3 text-sm font-medium text-primary"
+          className="mb-6 rounded-lg px-4 py-3 text-sm font-medium"
+          style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}
         >
-          Email verified! You can now sign in.
+          ✓ Email verified! You can now sign in.
         </div>
       )}
       <LoginForm initialError={initialError} callbackUrl={callbackUrl} />
