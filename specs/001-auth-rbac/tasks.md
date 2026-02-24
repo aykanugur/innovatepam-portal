@@ -21,9 +21,9 @@
 
 **Purpose**: Install missing dependencies and add missing npm scripts. All foundational work (env vars, schema, Prisma client, base utilities) was completed in 001-foundation.
 
-- [ ] T001 Install missing npm packages: `npm install next-auth@beta resend @upstash/ratelimit @upstash/redis`
-- [ ] T002 [P] Add `db:seed` script to `package.json`: `"db:seed": "tsx prisma/seed.ts"` (tsx already available via ts-node); add `"test:unit": "vitest run __tests__/unit"` alias
-- [ ] T003 [P] Create `types/next-auth.d.ts` — extend `Session` and `JWT` interfaces: add `id: string` and `role: string` to `session.user`; add `id`, `role` to JWT token type
+- [x] T001 Install missing npm packages: `npm install next-auth@beta resend @upstash/ratelimit @upstash/redis`
+- [x] T002 [P] Add `db:seed` script to `package.json`: `"db:seed": "tsx prisma/seed.ts"` (tsx already available via ts-node); add `"test:unit": "vitest run __tests__/unit"` alias
+- [x] T003 [P] Create `types/next-auth.d.ts` — extend `Session` and `JWT` interfaces: add `id: string` and `role: string` to `session.user`; add `id`, `role` to JWT token type
 
 **Checkpoint**: Dependencies installed, TypeScript session types extended, scripts registered
 
