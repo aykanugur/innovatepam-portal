@@ -7,6 +7,7 @@
 @theme {
   /* ── Typography ────────────────────────────────────────────── */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-inter), ui-sans-serif, sans-serif;
 }
 
 @theme inline {

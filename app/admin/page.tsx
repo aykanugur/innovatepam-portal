@@ -111,7 +111,7 @@ export default async function AdminPage() {
       >
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
+            <span className="font-bold text-base tracking-tight" style={{ color: '#FF6B00' }}>
               &lt;epam&gt;
             </span>
             <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>
@@ -157,7 +157,7 @@ export default async function AdminPage() {
               Dashboard
             </span>
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="mt-1 text-sm" style={{ color: '#8888A8' }}>
             {dbUser.displayName ?? dbUser.email}
           </p>
         </div>

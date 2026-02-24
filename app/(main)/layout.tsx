@@ -60,7 +60,7 @@ export default async function MainLayout({ children }: MainLayoutProps) {
       >
         <nav className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
+            <span className="font-bold text-base tracking-tight" style={{ color: '#FF6B00' }}>
               &lt;epam&gt;
             </span>
             <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>

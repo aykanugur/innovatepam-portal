@@ -142,20 +142,27 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* ── RIGHT PANEL — auth form ────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 bg-white relative">
+      <div
+        className="flex flex-1 flex-col items-center justify-center px-6 py-16 relative"
+        style={{ background: '#0C0C14', borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+      >
         {/* Mobile-only logo */}
         <div className="lg:hidden absolute top-6 left-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-base" style={{ color: '#0070f3' }}>
+            <span className="font-bold text-base" style={{ color: '#FF6B00' }}>
               &lt;epam&gt;
             </span>
-            <span className="font-semibold text-base text-gray-900">InnovatEPAM</span>
+            <span className="font-semibold text-base" style={{ color: '#F0F0FA' }}>
+              InnovatEPAM
+            </span>
           </Link>
         </div>
 
         <div className="w-full max-w-[400px]">{children}</div>
 
-        <p className="absolute bottom-6 text-xs text-gray-300">© 2026 EPAM Systems, Inc.</p>
+        <p className="absolute bottom-6 text-xs" style={{ color: '#40405A' }}>
+          © 2026 EPAM Systems, Inc.
+        </p>
       </div>
     </div>
   )

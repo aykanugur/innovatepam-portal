@@ -7,7 +7,7 @@
  * - Three parallel Prisma queries for chart data
  */
 
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { IdeasByCategoryChart } from '@/components/analytics/ideas-by-category-chart'
@@ -23,11 +23,6 @@ export const metadata: Metadata = {
 }
 
 export default async function AnalyticsPage() {
-  // FR-021: feature flag gate
-  if (process.env.FEATURE_ANALYTICS_ENABLED !== 'true') {
-    notFound()
-  }
-
   const session = await auth()
 
   // FR-022: Re-read role from DB for freshness (R-007)

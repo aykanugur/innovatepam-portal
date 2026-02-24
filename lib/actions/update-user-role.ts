@@ -4,6 +4,7 @@
  */
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 
@@ -59,6 +60,8 @@ export async function updateUserRole(
     where: { id: targetId },
     data: { role: newRole },
   })
+
+  revalidatePath('/admin/users')
 
   // eslint-disable-next-line no-console
   console.log(

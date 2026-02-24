@@ -104,7 +104,7 @@ export default async function DashboardPage() {
       >
         <nav className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-bold text-base tracking-tight" style={{ color: '#00c8ff' }}>
+            <span className="font-bold text-base tracking-tight" style={{ color: '#FF6B00' }}>
               &lt;epam&gt;
             </span>
             <span className="font-semibold text-base tracking-tight text-white">InnovatEPAM</span>
@@ -159,12 +159,12 @@ export default async function DashboardPage() {
           <div
             className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full text-xs font-medium"
             style={{
-              background: 'rgba(0,200,255,0.08)',
-              border: '1px solid rgba(0,200,255,0.2)',
-              color: '#00c8ff',
+              background: 'rgba(255,107,0,0.1)',
+              border: '1px solid rgba(255,107,0,0.25)',
+              color: '#FF6B00',
             }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00c8ff] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-pulse" />
             <span className="capitalize">{role.toLowerCase().replace('_', ' ')}</span>
           </div>
           <h1
@@ -178,7 +178,7 @@ export default async function DashboardPage() {
             Welcome back,{' '}
             <span
               style={{
-                background: 'linear-gradient(90deg, #00c8ff, #a855f7)',
+                background: 'linear-gradient(90deg, #FF6B00, #FF8C38)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
               {displayName}
             </span>
           </h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-sm" style={{ color: '#8888A8' }}>
             {email}
           </p>
         </div>

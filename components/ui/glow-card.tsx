@@ -27,8 +27,10 @@ export function GlowCard({ href, icon, label, desc, glow }: GlowCardProps) {
       onMouseLeave={() => setHovered(false)}
     >
       <div className="mb-3 text-2xl">{icon}</div>
-      <h2 className="mb-1 text-sm font-semibold text-white">{label}</h2>
-      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+      <h2 className="mb-1 text-sm font-semibold" style={{ color: '#F0F0FA' }}>
+        {label}
+      </h2>
+      <p className="text-xs" style={{ color: '#A0A0BC' }}>
         {desc}
       </p>
     </Link>

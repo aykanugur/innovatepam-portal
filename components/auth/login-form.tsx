@@ -72,19 +72,25 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
     <div>
       {/* Heading */}
       <h2
-        className="mb-1 font-bold tracking-tight text-gray-900"
-        style={{ fontSize: '1.75rem', letterSpacing: '-0.03em' }}
+        className="mb-1 font-bold tracking-tight"
+        style={{ fontSize: '1.75rem', letterSpacing: '-0.03em', color: '#F0F0FA' }}
       >
         Welcome back
       </h2>
-      <p className="mb-8 text-sm text-gray-500">Sign in to your EPAM account to continue.</p>
+      <p className="mb-8 text-sm" style={{ color: '#8888A8' }}>
+        Sign in to your EPAM account to continue.
+      </p>
 
       {/* Server error banner */}
       {serverError && (
         <div
           role="alert"
           className="mb-5 rounded-lg px-4 py-3 text-sm"
-          style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}
+          style={{
+            background: 'rgba(239,68,68,0.12)',
+            color: '#F87171',
+            border: '1px solid rgba(239,68,68,0.25)',
+          }}
         >
           {serverError}
         </div>
@@ -93,7 +99,11 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         {/* Email */}
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="mb-1.5 block text-sm font-medium"
+            style={{ color: '#C0C0D8' }}
+          >
             Email
           </label>
           <input
@@ -106,15 +116,17 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
             onChange={handleChange}
             aria-invalid={!!fieldErrors.email}
             aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-            className="w-full rounded-lg px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition"
+            className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition"
             style={{
-              border: fieldErrors.email ? '1px solid #f87171' : '1px solid #d1d5db',
-              background: '#fafafa',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              background: '#1A1A2A',
+              border: fieldErrors.email
+                ? '1px solid rgba(239,68,68,0.6)'
+                : '1px solid rgba(255,255,255,0.1)',
+              color: '#F0F0FA',
             }}
           />
           {fieldErrors.email && (
-            <p id="email-error" role="alert" className="mt-1 text-xs" style={{ color: '#ef4444' }}>
+            <p id="email-error" role="alert" className="mt-1 text-xs" style={{ color: '#F87171' }}>
               {fieldErrors.email}
             </p>
           )}
@@ -122,7 +134,11 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="mb-1.5 block text-sm font-medium"
+            style={{ color: '#C0C0D8' }}
+          >
             Password
           </label>
           <input
@@ -135,11 +151,13 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
             onChange={handleChange}
             aria-invalid={!!fieldErrors.password}
             aria-describedby={fieldErrors.password ? 'password-error' : undefined}
-            className="w-full rounded-lg px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition"
+            className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition"
             style={{
-              border: fieldErrors.password ? '1px solid #f87171' : '1px solid #d1d5db',
-              background: '#fafafa',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              background: '#1A1A2A',
+              border: fieldErrors.password
+                ? '1px solid rgba(239,68,68,0.6)'
+                : '1px solid rgba(255,255,255,0.1)',
+              color: '#F0F0FA',
             }}
           />
           {fieldErrors.password && (
@@ -147,7 +165,7 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
               id="password-error"
               role="alert"
               className="mt-1 text-xs"
-              style={{ color: '#ef4444' }}
+              style={{ color: '#F87171' }}
             >
               {fieldErrors.password}
             </p>
@@ -160,10 +178,10 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
           disabled={isPending}
           className="mt-2 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition"
           style={{
-            background: isPending ? '#3b82f6' : 'linear-gradient(135deg, #1d4ed8, #4f46e5)',
-            opacity: isPending ? 0.75 : 1,
+            background: isPending ? '#CC5500' : 'linear-gradient(135deg, #FF6B00, #FF8C38)',
+            opacity: isPending ? 0.7 : 1,
             cursor: isPending ? 'not-allowed' : 'pointer',
-            boxShadow: '0 2px 8px rgba(79,70,229,0.35)',
+            boxShadow: '0 2px 12px rgba(255,107,0,0.35)',
           }}
         >
           {isPending ? 'Signing in…' : 'Sign in'}
@@ -171,9 +189,9 @@ export function LoginForm({ initialError, callbackUrl }: LoginFormProps) {
       </form>
 
       {/* Footer link */}
-      <p className="mt-7 text-center text-sm text-gray-500">
+      <p className="mt-7 text-center text-sm" style={{ color: '#8888A8' }}>
         Don&apos;t have an account?{' '}
-        <a href="/register" className="font-medium transition" style={{ color: '#4f46e5' }}>
+        <a href="/register" className="font-medium transition" style={{ color: '#FF6B00' }}>
           Create one
         </a>
       </p>
