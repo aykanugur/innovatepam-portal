@@ -87,8 +87,10 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 - What happens when `SUPERADMIN_EMAIL` is set but no matching User exists in the database? → Seed script logs a warning and exits cleanly without crashing.
 - What happens when a user's role is updated while they have an active session? → The new role takes effect on the next server request; no re-login required.
 - What happens when an ADMIN attempts to promote a user to SUPERADMIN? → The action is rejected: "Only SUPERADMIN can assign the SUPERADMIN role."
-- What happens when a brute-force login is attempted? → After 5 failed attempts per 15-minute window per IP, the account is temporarily rate-limited.
+- What happens when a brute-force login is attempted? → After 5 failed attempts within a 15-minute window per IP, further login attempts are blocked for 15 minutes. The user sees: "Too many login attempts. Please try again in 15 minutes."
 - What happens when the Resend email API fails during registration? → Registration succeeds; a user-visible banner warns the verification email could not be sent.
+- What happens when a non-`@epam.com` email is submitted at `/register`? → The form rejects it with: "Only @epam.com addresses are permitted." before the request reaches the server.
+- What happens when a user leaves Display Name blank at registration? → The system automatically extracts the local part of their email address (before `@`) and stores it as their display name.
 
 ---
 
@@ -96,7 +98,7 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 
 ### Functional Requirements
 
-- **FR-001**: Users MUST be able to create an account with a valid email address and a password meeting minimum complexity rules (≥8 characters, at least 1 uppercase, 1 lowercase, 1 number).
+- **FR-001**: Users MUST be able to create an account with a valid `@epam.com` email address and a password meeting minimum complexity rules (≥8 characters, at least 1 uppercase, 1 lowercase, 1 number). Non-`@epam.com` addresses MUST be rejected with: "Only @epam.com addresses are permitted." Display Name is optional at registration; if left blank, the system MUST automatically derive it from the local part of the email address (the portion before `@`) and persist it as the user's display name.
 - **FR-002**: System MUST reject registration attempts with an already-registered email and display a clear, named error message.
 - **FR-003**: System MUST validate password strength on the client side before sending the form to the server.
 - **FR-004**: When `FEATURE_EMAIL_VERIFICATION_ENABLED=true`, system MUST send a verification email with a unique, time-limited token (24-hour expiry) immediately after registration.
@@ -113,11 +115,13 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 - **FR-015**: Superadmins MUST be able to view all users and change their roles via `/admin/users` (when `FEATURE_USER_MANAGEMENT_ENABLED=true`).
 - **FR-016**: System MUST prevent any user from changing their own role.
 - **FR-017**: Only `SUPERADMIN` role holders MUST be able to assign or remove the `SUPERADMIN` role.
+- **FR-018**: System MUST block login attempts from an IP address for 15 minutes after 5 consecutive failed attempts within a 15-minute window, returning a clear message: "Too many login attempts. Please try again in 15 minutes." Cooldown resets automatically — no admin action required.
+- **FR-019**: System MUST emit a structured server-side log entry (to stdout) for each of the following auth events: login success, login failure, logout, and role change. Each entry MUST include: event type, timestamp, and the affected user's email (no passwords or tokens logged).
 
 ### Key Entities
 
-- **User**: Represents a registered employee. Key attributes: email (unique), display name, hashed password, role (SUBMITTER / ADMIN / SUPERADMIN), email verification status, verification token, token expiry.
-- **Session**: Represents an authenticated browser session. Contains the user's identity and role; stateless and signed. Expires on logout or timeout.
+- **User**: Represents a registered employee. Key attributes: email (unique, must be `@epam.com`), display name (derived from email local-part if not provided at registration), hashed password, role (SUBMITTER / ADMIN / SUPERADMIN), email verification status, verification token, token expiry.
+- **Session**: Represents an authenticated browser session. Contains the user's identity and role; stateless and signed. Expires after 1 hour of inactivity or on browser close (no persistent cookie). Destroyed immediately on explicit logout.
 - **Verification Token**: A single-use token tied to a User, valid for 24 hours, used to confirm email ownership during registration.
 
 ---
@@ -134,13 +138,24 @@ All protected routes reject unauthenticated users. Admin-only routes additionall
 
 ---
 
+## Clarifications
+
+### Session 2026-02-24
+
+- Q: Should registration be restricted to `@epam.com` email addresses only, or any well-formed email? → A: Restrict to `@epam.com` only — reject any other domain with "Only @epam.com addresses are permitted."
+- Q: How long should a user session last and does it survive browser restarts? → A: 1-hour expiry, expires on browser close — no persistent cookie, no "Remember me" option.
+- Q: Is Display Name required at registration, or optional? → A: Optional — if left blank, the system automatically derives it from the local part of the email address (before `@`) and saves it as the default display name.
+- Q: What is the rate-limit lockout duration after 5 failed login attempts? → A: 15-minute automatic cooldown — no admin unlock needed; the block lifts automatically after 15 minutes.
+- Q: Should auth events (login, logout, role changes) be logged, and if so where? → A: Server-side structured logs to stdout only — no persistent audit table; covers login success/failure, logout, and role changes with timestamp and email.
+
+---
+
 ## Assumptions
 
 - Email verification link format: `/verify-email?token=<hex-token>`
 - Verification tokens are stored as plain hex strings in the database (not JWTs); the secrecy of the token value provides security.
 - `FEATURE_EMAIL_VERIFICATION_ENABLED=false` is the default for local development and alpha; `true` is the default for production.
+- Sessions are non-persistent (session cookies only — no `Max-Age` or `Expires` attribute); they expire after 1 hour of inactivity or when the browser is closed.
 - Rate-limiting uses Upstash Redis when `UPSTASH_REDIS_REST_URL` is configured; falls back to a simple in-memory counter otherwise.
-- Password reset and OAuth/SSO are explicitly out of scope for this epic.
 - The seed script is safe to run multiple times (idempotent).
-
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+- Auth events are logged to stdout as structured entries; no persistent `AuditLog` database table is created in this epic.
