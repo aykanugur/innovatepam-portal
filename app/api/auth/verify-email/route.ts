@@ -46,6 +46,7 @@ export async function GET(request: Request) {
     db.verificationToken.delete({ where: { token } }),
   ])
 
+  // eslint-disable-next-line no-console
   console.log(
     JSON.stringify({ event: 'verify.success', email: record.email, ts: new Date().toISOString() })
   )

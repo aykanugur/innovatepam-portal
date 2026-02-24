@@ -26,6 +26,7 @@ const bodySchema = z.object({
 // ─── Structured logging helper (FR-019) ──────────────────────────────────────
 
 function logEvent(event: Record<string, unknown>) {
+  // eslint-disable-next-line no-console
   console.log(JSON.stringify({ ts: new Date().toISOString(), ...event }))
 }
 

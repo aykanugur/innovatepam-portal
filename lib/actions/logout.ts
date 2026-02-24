@@ -10,6 +10,7 @@ import { auth, signOut } from '@/auth'
 export async function logoutAction() {
   const session = await auth()
 
+  // eslint-disable-next-line no-console
   console.log(
     JSON.stringify({
       event: 'logout',
