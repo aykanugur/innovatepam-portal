@@ -1,5 +1,5 @@
 /**
- * __tests__/e2e/review-workflow.spec.ts — T028
+ * tests/e2e/review-workflow.spec.ts — T028
  *
  * US-016 AC-2 path (c): Review workflow E2E.
  * - Seed submitter + idea + admin

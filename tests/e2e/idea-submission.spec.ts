@@ -1,5 +1,5 @@
 /**
- * __tests__/e2e/idea-submission.spec.ts — T027
+ * tests/e2e/idea-submission.spec.ts — T027
  *
  * US-016 AC-2 path (b): Idea submission E2E.
  * - Login as SUBMITTER → navigate to /ideas/new

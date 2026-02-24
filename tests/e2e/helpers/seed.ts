@@ -1,5 +1,5 @@
 /**
- * __tests__/e2e/helpers/seed.ts — T025
+ * tests/e2e/helpers/seed.ts — T025
  *
  * Shared Playwright API helpers for E2E seed/cleanup.
  * Uses Playwright's APIRequestContext to call /api/test/seed and /api/test/cleanup.

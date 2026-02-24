@@ -1,5 +1,5 @@
 /**
- * __tests__/e2e/helpers/auth.ts — T024
+ * tests/e2e/helpers/auth.ts — T024
  *
  * Shared Playwright helper: loginAs(page, role)
  * Navigates to /login, fills credentials, and waits for redirect.

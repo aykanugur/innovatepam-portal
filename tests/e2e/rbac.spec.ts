@@ -1,5 +1,5 @@
 /**
- * __tests__/e2e/rbac.spec.ts — T029
+ * tests/e2e/rbac.spec.ts — T029
  *
  * US-016 AC-2 path (d): RBAC E2E.
  * - Login as SUBMITTER → attempt /admin → redirect to /forbidden

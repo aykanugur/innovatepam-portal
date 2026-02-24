@@ -1,5 +1,5 @@
 /**
- * __tests__/e2e/auth.spec.ts — T026
+ * tests/e2e/auth.spec.ts — T026
  *
  * US-016 AC-2 path (a): Login E2E.
  * - Navigate /login → fill credentials → submit → assert redirect to /ideas
