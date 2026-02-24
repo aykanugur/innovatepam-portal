@@ -42,3 +42,7 @@ test-results/
 # Misc
 *.tgz
 .cache/
+
+# User-uploaded files (local dev)
+public/uploads/*
+!public/uploads/.gitkeep

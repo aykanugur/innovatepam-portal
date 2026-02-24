@@ -347,7 +347,7 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
 
       {/* File attachment (T013) — rendered only when flag is on */}
       {attachmentEnabled && (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <label
             htmlFor="attachment"
             className="block text-sm font-medium"
@@ -358,19 +358,91 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
               (optional)
             </span>
           </label>
-          <input
-            ref={fileRef}
-            id="attachment"
-            name="attachment"
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.docx,.md"
-            onChange={handleFileChange}
-            aria-describedby="attachment-hint attachment-error"
-            className="w-full text-sm file:mr-3 file:rounded-full file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white file:cursor-pointer"
-            style={{ color: '#A0A0BC' }}
-          />
+
+          {/* Drop-zone / file picker */}
+          <div
+            className="relative flex items-center gap-3 rounded-xl px-4 py-3 transition cursor-pointer"
+            style={{
+              background: '#1A1A2A',
+              border: errors.attachment
+                ? '1px solid rgba(239,68,68,0.6)'
+                : '1px dashed rgba(0,200,255,0.25)',
+            }}
+            onClick={() => fileRef.current?.click()}
+          >
+            {/* Hidden native input */}
+            <input
+              ref={fileRef}
+              id="attachment"
+              name="attachment"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.docx,.md"
+              onChange={handleFileChange}
+              aria-describedby="attachment-hint attachment-error"
+              className="sr-only"
+            />
+
+            {/* Icon */}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: '#00c8ff', flexShrink: 0 }}
+            >
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+
+            {/* Label / filename */}
+            {file ? (
+              <span className="flex-1 truncate text-sm" style={{ color: '#F0F0FA' }}>
+                {file.name}
+              </span>
+            ) : (
+              <span className="flex-1 text-sm" style={{ color: '#60607A' }}>
+                Click to attach a file
+              </span>
+            )}
+
+            {/* Pill button or Clear button */}
+            {file ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFile(null)
+                  if (fileRef.current) fileRef.current.value = ''
+                  setErrors((prev) => ({ ...prev, attachment: undefined }))
+                }}
+                className="rounded-full px-2.5 py-1 text-xs font-medium transition"
+                style={{
+                  background: 'rgba(239,68,68,0.12)',
+                  color: '#F87171',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                }}
+              >
+                Remove
+              </button>
+            ) : (
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold"
+                style={{
+                  background: 'rgba(0,200,255,0.12)',
+                  color: '#00c8ff',
+                  border: '1px solid rgba(0,200,255,0.2)',
+                }}
+              >
+                Browse
+              </span>
+            )}
+          </div>
+
           <p id="attachment-hint" className="text-xs" style={{ color: '#60607A' }}>
-            PDF, PNG, JPG, DOCX, or MD — max 5 MB
+            PDF, PNG, JPG, DOCX, or MD · max 5 MB
           </p>
           {errors.attachment ? (
             <p id="attachment-error" role="alert" className="text-xs" style={{ color: '#F87171' }}>

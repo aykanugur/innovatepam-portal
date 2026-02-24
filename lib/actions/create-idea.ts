@@ -7,15 +7,21 @@
  * authenticated session is always available via auth().
  * Handles optional file attachment when FEATURE_FILE_ATTACHMENT_ENABLED=true.
  *
+ * File storage strategy:
+ *  - If BLOB_READ_WRITE_TOKEN is set  → use @vercel/blob (production)
+ *  - Otherwise                        → save to public/uploads/ (local dev)
+ *
  * On success returns { id } for client-side redirect to /ideas/<id>.
  * On error returns { error: string }.
  */
+
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { ideaSubmitRateLimiter } from '@/lib/rate-limit'
 import { CreateIdeaSchema } from '@/lib/validations/idea'
-import { put } from '@vercel/blob'
 
 export interface CreateIdeaResult {
   id?: string
@@ -80,15 +86,30 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
     if (attachmentFile.size > MAX_FILE_BYTES) return { error: 'File must be under 5 MB.' }
   }
 
-  // ── Blob upload ───────────────────────────────────────────────────────────
+  // ── File storage ─────────────────────────────────────────────────────────
+  // Production: Vercel Blob (when BLOB_READ_WRITE_TOKEN is set)
+  // Local dev:  write to public/uploads/ and return a relative URL
   let attachmentPath: string | null = null
 
   if (attachmentFile) {
     try {
-      const { url } = await put(attachmentFile.name, attachmentFile, { access: 'public' })
-      attachmentPath = url
+      if (process.env.BLOB_READ_WRITE_TOKEN) {
+        const { put } = await import('@vercel/blob')
+        const { url } = await put(attachmentFile.name, attachmentFile, { access: 'public' })
+        attachmentPath = url
+      } else {
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+        await fs.mkdir(uploadsDir, { recursive: true })
+        const safeName = attachmentFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const filename = `${Date.now()}-${safeName}`
+        await fs.writeFile(
+          path.join(uploadsDir, filename),
+          Buffer.from(await attachmentFile.arrayBuffer())
+        )
+        attachmentPath = `/uploads/${filename}`
+      }
     } catch {
-      // Non-fatal: save idea without attachment
+      // Non-fatal: store idea without attachment if write fails
       attachmentPath = null
     }
   }
