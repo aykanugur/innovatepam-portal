@@ -152,9 +152,9 @@ The full test suite — unit tests for state machine logic and validation, integ
 - **FR-004**: When "Start Review" is triggered, the system MUST create an `IdeaReview` record containing the reviewer identity and a start timestamp, and update `Idea.status` to `UNDER_REVIEW` atomically. The review record exists from this point with no decision yet.
 - **FR-005**: To finalize a decision (Accept or Reject), the reviewer MUST provide a comment of at least 10 characters. Both Accept and Reject are subject to the same minimum; an attempt to finalize with a missing or too-short comment MUST be rejected with the message "A comment is required (minimum 10 characters)."
 - **FR-006**: When a decision is finalized, the system MUST atomically update the existing `IdeaReview` record (adding decision, comment, and decision timestamp) and update `Idea.status` to `ACCEPTED` or `REJECTED`.
-- **FR-007**: The submitter's idea detail page MUST display the final decision, reviewer display name, comment, and the date the decision was made.
+- **FR-007**: The submitter's idea detail page (`/ideas/<id>`) MUST display the final decision, reviewer display name, comment, and the date the decision was made. _(Submitter view — see FR-029 for the equivalent admin view on `/admin/review/<id>`.)_
 - **FR-008**: An idea that has already been reviewed MUST NOT be transitionable to any new state; any attempt MUST return an error.
-- **FR-029**: After a decision is finalized, the review page MUST replace the action panel with a read-only decision card displaying: the decision (ACCEPTED or REJECTED), the reviewer's display name, the comment, and the decision timestamp. No redirect occurs.
+- **FR-029**: After a decision is finalized, the admin review page (`/admin/review/<id>`) MUST replace the action panel with a read-only decision card displaying: the decision (ACCEPTED or REJECTED), the reviewer's display name, the comment, and the decision timestamp. No redirect occurs. _(Admin view — see FR-007 for the equivalent submitter view on `/ideas/<id>`.)_
 - **FR-030**: A SUPERADMIN MUST be able to perform an "Abandon Review" action on any idea in `UNDER_REVIEW` state, atomically resetting `Idea.status` to `SUBMITTED`, deleting the in-progress `IdeaReview` record, and writing an `IDEA_REVIEW_ABANDONED` audit entry containing the idea ID, original reviewer ID, and SUPERADMIN actor ID. Non-SUPERADMIN roles MUST NOT be able to trigger this action.
 
 **Admin Dashboard (US-013)**
@@ -163,7 +163,7 @@ The full test suite — unit tests for state machine logic and validation, integ
 - **FR-010**: The dashboard MUST show a "Pending Review" queue listing all `SUBMITTED` ideas ordered oldest-first, with each row showing: title, author name, category, and relative submission time.
 - **FR-011**: Each row in the "Pending Review" queue MUST include a direct navigation link to the review page for that idea.
 - **FR-012**: When no ideas are in `SUBMITTED` status, the "Pending Review" section MUST display an empty-state message acknowledging the clear queue.
-- **FR-013**: Stat counts and the pending queue MUST reflect the current state after any review action completes — stale cached data MUST NOT persist.
+- **FR-013**: Stat counts and the pending queue MUST reflect the current state after any review action completes — stale cached data MUST NOT persist. _Implementation note: freshness is achieved via `revalidatePath('/admin')` called at the end of every review Server Action; the page requires a full navigation or server re-render to pick up changes — no real-time push (SSE/polling) is required._
 - **FR-014**: The admin dashboard MUST be accessible only to ADMIN and SUPERADMIN roles; all other authenticated users MUST receive an access-denied response.
 
 **Profile & Settings (US-015)**
@@ -204,7 +204,7 @@ The full test suite — unit tests for state machine logic and validation, integ
 - **SC-001**: An admin can complete the full review cycle (start review → finalize decision with comment) in under 2 minutes on a standard connection.
 - **SC-002**: A submitter sees the decision on their idea detail page within one page load after the review is finalized — no additional action required on their part.
 - **SC-003**: The admin dashboard stat counts accurately reflect the true state of all ideas; no stale count persists beyond the completion of a review action.
-- **SC-004**: `npm run test:coverage` reports ≥ 80% line coverage across all source files before the GA deployment.
+- **SC-004**: The coverage report output from `npm run test:coverage` shows all four Vitest metrics (lines, branches, functions, statements) ≥ 80% across all source files before the GA deployment. _(FR-025 covers the command availability; this criterion covers all four metric dimensions, not only lines.)_
 - **SC-005**: All four E2E critical paths pass without error on every CI run.
 - **SC-006**: The GA deployment produces zero build errors and passes the manual smoke test for all P1 user stories on the production URL.
 - **SC-007**: An admin cannot review their own submitted idea under any circumstances — this rule holds across UI, server actions, and direct API calls.
@@ -219,7 +219,7 @@ The full test suite — unit tests for state machine logic and validation, integ
 4. A `DATABASE_URL_TEST` environment variable points to a separate test database for integration tests; it must not share data with the development or production database.
 5. US-014 (Analytics) and US-015 (Profile & Settings) are cut-first candidates — they are out of scope for the primary delivery timeline and will only be built if all P1 stories are complete with time remaining.
 6. The `FEATURE_ANALYTICS_ENABLED` flag defaults to `false`; turning it off cleanly suppresses the analytics page without breaking anything else.
-7. Average review time on the analytics page excludes ideas still in `SUBMITTED` status (i.e., only ideas with a final decision are counted).
+7. ~~Average review time on the analytics page excludes ideas still in `SUBMITTED` status.~~ _Orphaned — no FR or US-014 chart (FR-023) specifies an average review time metric. If this metric is needed, it must be added to FR-023 as a fourth chart with an explicit flag-gated note before implementation. Disregard until then._
 8. Password complexity validation reuses the same Zod schema applied at registration — no separate policy is defined.
 
 ---
