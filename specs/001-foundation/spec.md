@@ -99,6 +99,8 @@ A developer can onboard to the project within minutes and knows exactly which en
 - The local secrets file is accidentally staged for commit: the pre-commit hook or version control ignore pattern prevents it from being included.
 - The migration is run twice on the same database: the operation is idempotent and produces no errors or duplicate tables.
 - The environment variable documentation file is opened after new variables are added by another developer: it reflects all current variables — no undocumented keys exist in the codebase.
+- A `User` record is created without a display name value: the database rejects the insert — the application layer is responsible for always supplying the email-derived value before persisting.
+- An idea submission arrives with a category value not in the predefined list: the application layer rejects it with a validation error before any database operation is attempted.
 
 ## Requirements *(mandatory)*
 
@@ -108,21 +110,38 @@ A developer can onboard to the project within minutes and knows exactly which en
 - **FR-002**: The project MUST pass all code-quality checks with zero errors and zero warnings after initial setup.
 - **FR-003**: The project MUST include a design system component library configured and ready for use, with at least one component rendered on the home page.
 - **FR-004**: The project MUST enforce consistent code formatting automatically on every commit via a pre-commit hook — no manual formatting step should be required.
-- **FR-005**: The data schema MUST define `User`, `Idea`, and `IdeaReview` as first-class entities with the attributes and relationships needed by EPIC-02 and EPIC-03.
+- **FR-005**: The data schema MUST define `User`, `Idea`, `IdeaReview`, and `VerificationToken` as first-class entities. All four tables are created in the initial migration so that EPIC-02 requires no additional schema migration.
 - **FR-006**: The `User` entity MUST support three distinct roles: standard employee, administrator, and super-administrator — defaulting to standard employee on creation.
 - **FR-007**: The `Idea` entity MUST track a lifecycle status (submitted → under review → accepted / rejected) and a visibility setting (public or private).
 - **FR-008**: The `IdeaReview` entity MUST enforce a one-to-one relationship with its parent idea (one review per idea maximum).
 - **FR-009**: The database schema MUST be applied via a repeatable, version-controlled migration that can be run in any environment from a single command.
-- **FR-010**: A version-controlled environment variable documentation file MUST exist listing every required variable name and a description — with no actual secret values committed.
+- **FR-010**: A version-controlled environment variable documentation file MUST exist listing every required variable name with a description and no actual secret values committed. The complete required set is:
+  - `DATABASE_URL` — pooled database connection string (PgBouncer)
+  - `DIRECT_URL` — direct database connection string (used by migration CLI, bypasses pool)
+  - `AUTH_SECRET` — 32+ character secret for signing session tokens
+  - `NEXTAUTH_URL` — canonical application URL (e.g. `http://localhost:3000` in development)
+  - `RESEND_API_KEY` — transactional email service key (required when `FEATURE_EMAIL_VERIFICATION_ENABLED=true`)
+  - `UPSTASH_REDIS_REST_URL` — rate limiter store URL (falls back to in-memory if absent)
+  - `UPSTASH_REDIS_REST_TOKEN` — rate limiter store token (falls back to in-memory if absent)
+  - `SUPERADMIN_EMAIL` — email address to auto-promote to super-administrator on first seed
+  - `PORTAL_ENABLED` — global kill switch; `false` causes all routes to return a maintenance response
+  - `FEATURE_EMAIL_VERIFICATION_ENABLED` — enables email verification flow after registration
+  - `FEATURE_USER_MANAGEMENT_ENABLED` — enables the admin user management interface
+  - `FEATURE_FILE_ATTACHMENT_ENABLED` — enables file attachment on idea submissions
+  - `FEATURE_ANALYTICS_ENABLED` — enables the analytics dashboard
 - **FR-011**: The local secrets file MUST be excluded from version control by the project's ignore configuration.
 - **FR-012**: The application MUST be deployed to a production hosting platform reachable via a public URL, with all required environment variables configured in that platform.
 - **FR-013**: The deployment pipeline MUST trigger automatically on every push to the main branch.
+- **FR-014**: The `User.displayName` field MUST be NOT NULL. At the time a user record is created, `displayName` MUST be automatically set to the local-part of the user's email address (all characters before `@`). It MAY be updated later via profile settings.
+- **FR-015**: When `PORTAL_ENABLED=false`, the application MUST return a maintenance response for all routes — no authenticated or unauthenticated page is accessible.
+- **FR-016**: The `Idea.category` field MUST be constrained to a predefined list of valid values enforced at the application layer before any database insert or update. The allowed values MUST be defined in a single constants file so they can be updated without a schema migration. Invalid category values MUST be rejected with a validation error.
 
 ### Key Entities
 
-- **User**: Represents a registered employee. Has a unique identifier, work email, display name, role (standard / admin / super-admin), verification status, and timestamps. Can author many ideas and perform many reviews.
-- **Idea**: Represents an employee innovation submission. Has a title, description, category, lifecycle status, visibility setting, optional attachment reference, authoring user, and timestamps. Belongs to one author; may have at most one review.
+- **User**: Represents a registered employee. Has a unique identifier, work email, credential (hashed password), display name (NOT NULL — auto-derived from email local-part at registration, e.g. `aykan.ugur` from `aykan.ugur@epam.com`; editable later in profile), role (standard / admin / super-admin), email-verification status, and timestamps. Can author many ideas and perform many reviews.
+- **Idea**: Represents an employee innovation submission. Has a title, description, category (string column constrained to a predefined list enforced at application level), lifecycle status, visibility setting, optional attachment reference, authoring user, and timestamps. Belongs to one author; may have at most one review.
 - **IdeaReview**: Represents an administrator's evaluation of a single idea. Has a decision (accepted or rejected), a comment, the reviewing user, and a timestamp. Belongs to exactly one idea and one reviewer.
+- **VerificationToken**: Represents a single-use, time-limited token tied to a user's email address. Used by EPIC-02 to verify email ownership after registration. Has a token value (unique), the associated email, and an expiry timestamp.
 
 ## Success Criteria *(mandatory)*
 
@@ -140,8 +159,19 @@ A developer can onboard to the project within minutes and knows exactly which en
 - A managed database instance is provisioned and credentials are available before the schema migration task is attempted.
 - The design system component library is compatible with the CSS framework version in use; any version conflict is resolved as part of this feature, not deferred.
 - Code formatting rules (no semi-colons, single quotes, 2-space indent) are fixed for this project; no team member vote or preference override is needed.
-- The environment variable documentation file covers variables needed by all epics — including authentication and feature flags introduced in later epics — so the file is complete from Day 1.
+- The environment variable documentation file covers variables needed by all epics — the complete set of 13 variables is defined in FR-010 and committed on Day 1; no variable is added ad-hoc in later epics.
 - Running the schema migration more than once on the same database is safe and produces no errors (idempotent).
+
+## Clarifications
+
+### Session 2026-02-24
+
+- Q: Should the initial schema migration include auth-related fields (password credential on `User`, `VerificationToken` table) or only the 3 business entities? → A: Complete schema on Day 1 — initial migration creates all 4 tables (`User` with credential field, `Idea`, `IdeaReview`, `VerificationToken`) so EPIC-02 requires no additional schema migration.
+- Q: Is `User.displayName` required or optional, and where does its initial value come from? → A: NOT NULL — auto-derived from email local-part at registration (e.g. `aykan.ugur` from `aykan.ugur@epam.com`); editable later in profile settings (FR-014).
+- Q: Should the `.env.example` name all variables explicitly or stay vague? → A: Full explicit enumeration — 13 variables named in spec (FR-010): `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `NEXTAUTH_URL`, `RESEND_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SUPERADMIN_EMAIL`, and 5 feature flags.
+- Q: Is `Idea.category` a free-text field or constrained to a predefined list? → A: Predefined list enforced at application level (string column in DB); categories defined in a constants file; adding a category requires no migration (FR-016).
+
+---
 
 ## Out of Scope
 
