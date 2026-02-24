@@ -21,6 +21,7 @@
 - [ ] T002 [P] Add `BLOB_READ_WRITE_TOKEN` env var to `.env.example` (with comment: required only when `FEATURE_FILE_ATTACHMENT_ENABLED=true`)
 - [ ] T003 [P] Create `constants/categories.ts` — `CATEGORIES` array with `slug` + `label` pairs and `CategorySlug` type per data-model.md
 - [ ] T004 [P] Create `constants/status-badges.ts` — status → Tailwind color-class map (`SUBMITTED=gray`, `UNDER_REVIEW=yellow`, `ACCEPTED=green`, `REJECTED=red`) per FR-015
+- [ ] T031 Add `app/(main)/layout.tsx` if not already present — authenticated route group layout; wraps all idea pages with session check using the same pattern as the existing `(auth)` group; provides shared nav with links to `/ideas`, `/ideas/new`, `/my-ideas` _(prerequisite for T010, T019, T022, T029)_
 
 ---
 
@@ -34,8 +35,9 @@
 - [ ] T006 Run `npm run db:generate && npm run db:migrate --name add-idea-audit-log` to apply schema changes
 - [ ] T007 [P] Create `lib/validations/idea.ts` — `CreateIdeaSchema`, `IdeaListQuerySchema`, and `CategorySlug` type per data-model.md §Zod Validation Schemas
 - [ ] T008 Extend `lib/rate-limit.ts` with exported `ideaSubmitRateLimiter` factory using `Ratelimit.slidingWindow(1, '60 s')`, prefix `innovatepam:idea-submit`, in-memory fallback per research.md §R-003
+- [ ] T032 [P] Add `lib/api-error.ts` — exports `apiError(status, message, extras?)` returning `NextResponse.json({ error, ...extras }, { status })`; used consistently across all idea route handlers _(prerequisite for T011, T017, T021, T024, T028)_
 
-**Checkpoint**: Migration applied, Zod schemas available, rate limiter exported — user story implementation can now begin.
+**Checkpoint**: Migration applied, Zod schemas + rate limiter ready, auth layout (T031) + error helper (T032) in place — user story implementation can now begin.
 
 ---
 
@@ -51,7 +53,7 @@
 - [ ] T010 [P] [US1] Create `app/(main)/ideas/new/page.tsx` — auth-guarded server component that renders `<IdeaForm />`; unauthenticated visitors redirected to login with `callbackUrl` preserved (FR-001)
 - [ ] T011 [US1] Create `app/api/ideas/route.ts` — `POST` handler: authenticate session → check `ideaSubmitRateLimiter` (return 429 with `retryAfter` on fail) → parse + validate body with `CreateIdeaSchema` → create `Idea` record in DB → write `AuditLog` (`IDEA_CREATED`) → return `201` with `IdeaDetail` per contracts/ideas.md
 - [ ] T012 [US1] Create `lib/actions/create-idea.ts` — Server Action wrapping `POST /api/ideas`; handles `application/json` path (flag off) and `multipart/form-data` path (flag on); on success returns `{ id }` for client-side redirect to `/ideas/<id>`
-- [ ] T013 [P] [US1] Extend `components/ideas/idea-form.tsx` with conditional file attachment field (rendered only when `FEATURE_FILE_ATTACHMENT_ENABLED=true`): accepts PDF, PNG, JPG, DOCX, MD; max 5 MB; client-side type + size validation with inline error per FR-005/FR-006/FR-008
+- [ ] T013 [US1] Extend `components/ideas/idea-form.tsx` with conditional file attachment field (rendered only when `FEATURE_FILE_ATTACHMENT_ENABLED=true`): accepts PDF, PNG, JPG, DOCX, MD; max 5 MB; client-side type + size validation with inline error per FR-005/FR-006/FR-008
 - [ ] T014 [US1] Extend `app/api/ideas/route.ts` `POST` handler: when `FEATURE_FILE_ATTACHMENT_ENABLED=true` and `attachment` field present — upload to Vercel Blob via `put()`, store returned `url` in `Idea.attachmentPath`; on Blob upload failure save idea without attachment and include warning in response per edge case in spec §Edge Cases (FR-007)
 
 ---
@@ -109,34 +111,32 @@
 **Purpose**: Wires up remaining edge cases, accessible defaults, and developer ergonomics.
 
 - [ ] T030 [P] Update `prisma/seed.ts` — add seed ideas with varied statuses (`SUBMITTED`, `UNDER_REVIEW`, `ACCEPTED`, `REJECTED`), categories, and visibilities (`PUBLIC`, `PRIVATE`) for local development
-- [ ] T031 [P] Add `(main)` route group layout (`app/(main)/layout.tsx`) if not already present — wraps all idea pages in authenticated session check; renders shared nav with links to `/ideas`, `/ideas/new`, `/my-ideas`
-- [ ] T032 [P] Add 400 / 401 / 403 / 404 / 429 error response helper `lib/api-error.ts` — returns `NextResponse.json({ error, ... }, { status })` — used consistently across all three idea route handlers
 
 ---
 
 ## Dependencies
 
 ```
-Phase 1 (T001–T004): No dependencies — run first in any order
-Phase 2 (T005–T008): Depends on Phase 1 (T003 for categories in T007)
-Phase 3 (T009–T014): Depends on Phase 2 (T005–T008 must be complete)
-Phase 4 (T015–T019): Depends on Phase 2; T015 depends on T004 (badge constants)
-Phase 5 (T020–T027): Depends on Phase 2; T027 depends on T023 + T026
+Phase 1 (T001–T004, T031): No dependencies — T002/T003/T004/T031 parallel after T001
+Phase 2 (T005–T008, T032): Depends on Phase 1; T032 parallel with T007+T008 after T006
+Phase 3 (T009–T014): Depends on Phase 2; T013 depends on T009 (same file — not parallel); T011 depends on T032 (error helper)
+Phase 4 (T015–T019): Depends on Phase 2; T015 depends on T004; T017 depends on T011 (same route.ts file)
+Phase 5 (T020–T027): Depends on Phase 2; T027 depends on T022 + T023 + T026
 Phase 6 (T028–T029): Depends on Phase 2 only (no Phase 3–5 dependency)
-Phase 7 (T030–T032): Can run any time after Phase 2
+Phase 7 (T030): Can run any time after Phase 2
 ```
 
 **Parallel opportunities per phase**:
 
-| Phase | Parallelizable tasks                                                                         |
-| ----- | -------------------------------------------------------------------------------------------- |
-| 1     | T002, T003, T004 (all parallel after T001)                                                   |
-| 2     | T007 + T008 in parallel after T006                                                           |
-| 3     | T009 + T013 (form component), T010 (page) — parallel with each other; T011 + T012 sequential |
-| 4     | T015 + T016 + T018 parallel; T017 (API) then T019 (page)                                     |
-| 5     | T020 + T023 + T026 parallel; T021 then T022; T024 then T025; T027 last                       |
-| 6     | T028 + T029 parallel                                                                         |
-| 7     | T030 + T031 + T032 all parallel                                                              |
+| Phase | Parallelizable tasks                                                                            |
+| ----- | ----------------------------------------------------------------------------------------------- |
+| 1     | T002, T003, T004, T031 all parallel after T001                                                  |
+| 2     | T007 + T008 + T032 in parallel after T006                                                       |
+| 3     | T009 + T010 parallel; T013 after T009 (sequential — same file); T011 then T012                  |
+| 4     | T015 + T016 + T018 parallel; T017 after T011 (same file); T019 after T017                       |
+| 5     | T020 + T023 + T026 parallel; T021 then T022; T024 then T025; T027 last (depends T022+T023+T026) |
+| 6     | T028 + T029 parallel                                                                            |
+| 7     | T030 solo                                                                                       |
 
 ---
 
@@ -149,16 +149,16 @@ Phase 7 (T030–T032): Can run any time after Phase 2
 3. Complete Phase 4 (`T015–T019`) — US-009 fully functional; ideas can be browsed
 4. Complete Phase 5 (`T020–T027`) — US-010 fully functional; detail + delete work
 5. Complete Phase 6 (`T028–T029`) — US-011 fully functional; personal view works
-6. Complete Phase 7 (`T030–T032`) — polish and edge cases
+6. Complete Phase 7 (`T030`) — seed data polish
 
 **Total tasks**: 32 (T001–T032)
 
 | Phase                  | Task count | Story         |
 | ---------------------- | ---------- | ------------- |
-| Phase 1 — Setup        | 4          | Shared        |
-| Phase 2 — Foundational | 4          | Shared        |
+| Phase 1 — Setup        | 5          | Shared        |
+| Phase 2 — Foundational | 5          | Shared        |
 | Phase 3 — Submit Idea  | 6          | US-008        |
 | Phase 4 — Browse Ideas | 5          | US-009        |
 | Phase 5 — Idea Detail  | 8          | US-010        |
 | Phase 6 — My Ideas     | 2          | US-011        |
-| Phase 7 — Polish       | 3          | Cross-cutting |
+| Phase 7 — Polish       | 1          | Cross-cutting |

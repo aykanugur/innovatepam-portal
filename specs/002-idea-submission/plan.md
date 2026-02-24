@@ -46,7 +46,7 @@ specs/002-idea-submission/
 ├── quickstart.md    ✅ Phase 1 output
 ├── contracts/
 │   └── ideas.md     ✅ Phase 1 output — API contract for all idea endpoints
-└── tasks.md         🔲 Phase 2 output (created by /speckit.tasks)
+└── tasks.md         ✅ Phase 2 output
 ```
 
 ### Source Code (repository root)

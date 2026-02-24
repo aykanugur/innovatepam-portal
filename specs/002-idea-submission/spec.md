@@ -140,7 +140,7 @@ A logged-in employee visits their personal ideas page to see only their own subm
 - **FR-016**: The detail page MUST display: title, full description, author display name, category, visibility, status badge, and submission date.
 - **FR-017**: When the idea has a review record, the detail page MUST display the review decision, reviewer name, review date, and the reviewer's written comment.
 - **FR-018**: When `FEATURE_FILE_ATTACHMENT_ENABLED=true` and the idea has an attachment, a "Download Attachment" link MUST be shown.
-- **FR-019**: An employee viewing their own idea with status "Submitted" MUST see a "Delete" button. Clicking it MUST open a modal dialog overlay. The modal MUST contain a text input and a "Confirm Delete" button. The "Confirm Delete" button MUST remain disabled until the value of the text input exactly matches (case-sensitive) the authenticated user's profile name. On confirmation, the idea record is deleted and the user is redirected to the My Ideas page. For all other statuses (Under Review, Accepted, Rejected), the Delete button MUST be hidden entirely — not disabled — for the author.
+- **FR-019**: An employee viewing their own idea with status "Submitted" MUST see a "Delete" button. Clicking it MUST open a modal dialog overlay. The modal MUST contain a text input and a "Confirm Delete" button. The "Confirm Delete" button MUST remain disabled until the value of the text input exactly matches (case-sensitive) the authenticated user's `displayName`; leading and trailing whitespace in the input is trimmed before comparison. On confirmation, the idea record is deleted and the user is redirected to the My Ideas page. For all other statuses (Under Review, Accepted, Rejected), the Delete button MUST be hidden entirely — not disabled — for the author.
 - **FR-020**: ADMIN and SUPERADMIN users MUST be able to delete any idea.
 - **FR-021**: Private ideas belonging to other employees MUST return "Not Found" to SUBMITTER-role viewers.
 - **FR-022**: Non-existent idea IDs MUST return "Not Found."
@@ -157,6 +157,7 @@ A logged-in employee visits their personal ideas page to see only their own subm
 - **FR-027**: No unauthenticated request may read or write idea data.
 - **FR-028**: When an idea with a file attachment is deleted, the blob file MUST NOT be removed; the system stores only the DB record deletion. Orphaned blob cleanup is explicitly out of scope for this epic.
 - **FR-029**: The `POST /api/ideas` handler MUST reject a submission from an authenticated user if their previous submission was made within the last 60 seconds (server-side check). The response MUST be HTTP 429 with an informative error message indicating when the user may resubmit.
+- **FR-030**: When `FEATURE_FILE_ATTACHMENT_ENABLED=false` and an idea record has a non-null `attachmentPath` (created while the flag was previously enabled), the detail page MUST NOT render a download link; it MUST display "Attachment unavailable" in its place. The `attachmentPath` value is preserved in the database; no data is lost by toggling the flag.
 
 ---
 
