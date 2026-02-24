@@ -2,43 +2,47 @@
 
 /**
  * T025 — Server Action: delete an idea.
- * Wraps DELETE /api/ideas/[id].
+ *
+ * Directly writes to the DB (no internal HTTP round-trip) so that the
+ * authenticated session is always available via auth().
  * On success redirects to /my-ideas.
- * On 403/404/other errors propagates the error message to the caller.
- * R-005.
+ * R-005, FR-019, FR-020, FR-026.
  */
 import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
 
 export interface DeleteIdeaResult {
   error?: string
 }
 
 export async function deleteIdeaAction(ideaId: string): Promise<DeleteIdeaResult | never> {
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000'
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'You must be signed in.' }
 
-  const response = await fetch(`${baseUrl}/api/ideas/${ideaId}`, {
-    method: 'DELETE',
-    credentials: 'include',
+  const userId = session.user.id
+  const role = session.user.role ?? 'SUBMITTER'
+
+  const idea = await db.idea.findUnique({ where: { id: ideaId } })
+  if (!idea) return { error: 'Idea not found.' }
+
+  const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN'
+
+  if (!isAdmin) {
+    if (idea.authorId !== userId) return { error: 'You are not allowed to delete this idea.' }
+    if (idea.status !== 'SUBMITTED') return { error: 'You are not allowed to delete this idea.' }
+  }
+
+  await db.idea.delete({ where: { id: ideaId } })
+
+  await db.auditLog.create({
+    data: {
+      actorId: userId,
+      action: 'IDEA_DELETED',
+      targetId: ideaId,
+      metadata: { ideaTitle: idea.title, deletedByRole: role },
+    },
   })
 
-  if (response.ok) {
-    redirect('/my-ideas')
-  }
-
-  let message = 'Failed to delete idea.'
-  try {
-    const json = await response.json()
-    message = json.error ?? message
-  } catch {
-    // ignore parse errors
-  }
-
-  if (response.status === 403) {
-    return { error: 'You are not allowed to delete this idea.' }
-  }
-  if (response.status === 404) {
-    return { error: 'Idea not found.' }
-  }
-
-  return { error: message }
+  redirect('/my-ideas')
 }
