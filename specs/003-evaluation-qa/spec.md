@@ -14,6 +14,18 @@ This feature closes the innovation feedback loop by giving admins a structured w
 
 ---
 
+## Clarifications
+
+### Session 2026-02-24
+
+- Q: Should review state transitions be recorded in the AuditLog? → A: Log both — `IDEA_REVIEW_STARTED` (on Start Review) and `IDEA_REVIEWED` (on Accept/Reject, with decision and comment summary in metadata).
+- Q: Is a comment required on Accept as well as Reject? → A: Comment required on both Accept and Reject (minimum 10 characters).
+- Q: When is the IdeaReview record created? → A: Two-step — create the IdeaReview row at "Start Review" (reviewer identity + start timestamp, no decision yet); update it in-place at finalization. Concurrency guard = check whether a row already exists.
+- Q: Where is the admin taken after finalizing a review decision? → A: Stay on the review page — the action panel transitions to a read-only decision card showing the recorded outcome; no redirect.
+- Q: What happens when an admin starts a review but never finalizes it (stuck UNDER_REVIEW)? → A: A SUPERADMIN can explicitly perform an "Abandon Review" action that resets the idea from `UNDER_REVIEW` back to `SUBMITTED` and creates an `IDEA_REVIEW_ABANDONED` audit entry. No automatic timeout. Only the initiating admin or a SUPERADMIN can finalize; other admins cannot take over.
+
+---
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 — Idea Evaluation Workflow (Priority: P1)
@@ -30,10 +42,11 @@ An admin visits the review page for a submitted idea and progresses it through t
 
 1. **Given** I am ADMIN and visit `/admin/review/<ideaId>` for a `SUBMITTED` idea, **When** the page loads, **Then** I see the full idea detail and a "Start Review" button; the "Accept" and "Reject" buttons are not yet visible.
 2. **Given** I click "Start Review", **When** the action completes, **Then** the idea status changes to `UNDER_REVIEW` and the "Start Review" button is replaced by "Accept" and "Reject" buttons.
-3. **Given** the idea is `UNDER_REVIEW` and I click "Accept" with a comment, **When** the action completes, **Then** the idea status is `ACCEPTED`, a review record is persisted with the comment and reviewer identity, and the submitter's idea detail page shows the decision.
-4. **Given** I click "Reject" and leave the comment field empty, **When** I try to submit, **Then** I see: "A comment is required when rejecting an idea."
-5. **Given** the idea was originally submitted by me (admin is also the author), **When** I visit the review page, **Then** the action buttons are hidden and any direct API attempt returns a "You cannot review your own idea." error.
-6. **Given** the idea is already `ACCEPTED` or `REJECTED`, **When** any user attempts a state transition, **Then** the system rejects it with "This idea has already been reviewed."
+3. **Given** the idea is `UNDER_REVIEW` and I click "Accept" with a comment of at least 10 characters, **When** the action completes, **Then** the idea status is `ACCEPTED`, a review record is persisted with the comment and reviewer identity, the action panel on the review page is replaced by a read-only decision card showing the outcome, and the submitter's idea detail page displays the decision.
+4. **Given** I click "Reject" and leave the comment field empty, **When** I try to submit, **Then** I see: "A comment is required (minimum 10 characters)."
+5. **Given** I click "Accept" and leave the comment field empty or enter fewer than 10 characters, **When** I try to submit, **Then** I see: "A comment is required (minimum 10 characters)."
+6. **Given** the idea was originally submitted by me (admin is also the author), **When** I visit the review page, **Then** the action buttons are hidden and any direct API attempt returns a "You cannot review your own idea." error.
+7. **Given** the idea is already `ACCEPTED` or `REJECTED`, **When** any user attempts a state transition, **Then** the system rejects it with "This idea has already been reviewed."
 
 ---
 
@@ -117,12 +130,13 @@ The full test suite — unit tests for state machine logic and validation, integ
 
 ### Edge Cases
 
-- Two admins attempt to start reviewing the same idea simultaneously — first write wins; second receives "This idea is already under review by another admin."
+- Two admins attempt to start reviewing the same idea simultaneously — the system checks for an existing `IdeaReview` row before creating one; first write wins and creates the row; second attempt finds the row already exists and returns "This idea is already under review by another admin."
 - Admin attempts to accept an idea that is already in `ACCEPTED` or `REJECTED` state — rejected with "This idea has already been reviewed."
-- A review comment is submitted containing only whitespace — treated the same as an empty comment; validation error shown.
+- A review comment of only whitespace submitted on Accept or Reject — trimmed length is 0, treated as empty; validation error "A comment is required (minimum 10 characters)" shown.
 - Display name updated to an all-whitespace string — trimmed and rejected as empty.
 - Analytics page rendered when the database has ideas from only one user — leaderboard shows that single user at rank #1; other positions are empty.
 - Stat counts on the admin dashboard becoming stale after a review action — counts must reflect the latest state without requiring a manual reload.
+- An idea is stuck in `UNDER_REVIEW` (e.g., the reviewing admin leaves the portal without finalizing) — only a SUPERADMIN can reset it to `SUBMITTED` via the Abandon Review action; no automatic timeout is applied; the "Pending Review" queue MUST NOT list `UNDER_REVIEW` ideas, so the stuck idea is invisible to regular admins until it is abandoned.
 
 ---
 
@@ -133,13 +147,15 @@ The full test suite — unit tests for state machine logic and validation, integ
 **Evaluation Workflow (US-012)**
 
 - **FR-001**: Only users with ADMIN or SUPERADMIN roles MUST be able to access the idea review page or perform state transition actions.
-- **FR-002**: The idea state machine MUST enforce the sequence: `SUBMITTED → UNDER_REVIEW → ACCEPTED` or `SUBMITTED → UNDER_REVIEW → REJECTED`. No other transitions are permitted.
+- **FR-002**: The idea state machine MUST enforce the sequence: `SUBMITTED → UNDER_REVIEW → ACCEPTED` or `SUBMITTED → UNDER_REVIEW → REJECTED`. A SUPERADMIN may additionally trigger `UNDER_REVIEW → SUBMITTED` via the "Abandon Review" action. No other transitions are permitted.
 - **FR-003**: An admin MUST NOT be able to review an idea they authored; the system MUST reject such attempts with a clear error.
-- **FR-004**: When an idea is moved to `UNDER_REVIEW`, the system MUST record a timestamp of when the review was started.
-- **FR-005**: To finalize a decision, a reviewer MUST provide a comment. Rejections MUST require a comment; acceptances MUST also require a comment (minimum 10 characters).
-- **FR-006**: When a decision is finalized, the system MUST atomically update the idea's status and create a review record containing the decision, reviewer identity, comment, and timestamp.
+- **FR-004**: When "Start Review" is triggered, the system MUST create an `IdeaReview` record containing the reviewer identity and a start timestamp, and update `Idea.status` to `UNDER_REVIEW` atomically. The review record exists from this point with no decision yet.
+- **FR-005**: To finalize a decision (Accept or Reject), the reviewer MUST provide a comment of at least 10 characters. Both Accept and Reject are subject to the same minimum; an attempt to finalize with a missing or too-short comment MUST be rejected with the message "A comment is required (minimum 10 characters)."
+- **FR-006**: When a decision is finalized, the system MUST atomically update the existing `IdeaReview` record (adding decision, comment, and decision timestamp) and update `Idea.status` to `ACCEPTED` or `REJECTED`.
 - **FR-007**: The submitter's idea detail page MUST display the final decision, reviewer display name, comment, and the date the decision was made.
 - **FR-008**: An idea that has already been reviewed MUST NOT be transitionable to any new state; any attempt MUST return an error.
+- **FR-029**: After a decision is finalized, the review page MUST replace the action panel with a read-only decision card displaying: the decision (ACCEPTED or REJECTED), the reviewer's display name, the comment, and the decision timestamp. No redirect occurs.
+- **FR-030**: A SUPERADMIN MUST be able to perform an "Abandon Review" action on any idea in `UNDER_REVIEW` state, atomically resetting `Idea.status` to `SUBMITTED`, deleting the in-progress `IdeaReview` record, and writing an `IDEA_REVIEW_ABANDONED` audit entry containing the idea ID, original reviewer ID, and SUPERADMIN actor ID. Non-SUPERADMIN roles MUST NOT be able to trigger this action.
 
 **Admin Dashboard (US-013)**
 
@@ -171,11 +187,13 @@ The full test suite — unit tests for state machine logic and validation, integ
 - **FR-025**: A `test:coverage` command MUST be available and MUST report ≥ 80% line coverage across all source files before any GA deployment.
 - **FR-026**: An `test:e2e` command MUST be available and MUST run the four critical-path scenarios end-to-end without any failure.
 - **FR-027**: All tests MUST pass (zero failures) before the GA deployment proceeds; CI MUST block deployment if any test fails.
+- **FR-028**: The system MUST write an `IDEA_REVIEW_STARTED` audit log entry when an idea is moved to `UNDER_REVIEW`, and an `IDEA_REVIEWED` audit log entry when a final decision (ACCEPTED or REJECTED) is recorded — both entries MUST include the actor ID, target idea ID, and relevant metadata (decision and comment summary for the final event).
 
 ### Key Entities
 
-- **IdeaReview**: Represents the admin's evaluation of a single idea. Attributes: decision (ACCEPTED or REJECTED), mandatory comment text, reviewer identity, review start timestamp, and decision timestamp. Linked one-to-one with the idea being reviewed.
+- **IdeaReview**: Represents the admin's evaluation of a single idea. Created in two steps: first at "Start Review" (reviewer identity, start timestamp, no decision); then updated in-place at finalization (decision — ACCEPTED or REJECTED, mandatory comment ≥ 10 characters, decision timestamp). Linked one-to-one with the idea. The presence of an `IdeaReview` row with no decision serves as the concurrency guard — a second admin attempting to start review on the same idea will find the row already exists and receive "This idea is already under review by another admin."
 - **State machine**: A pure, side-effect-free function that takes the current idea status and a requested action and returns either the new valid status or an error. Enforces all permitted and forbidden transitions without touching persistence logic.
+- **AuditLog (review events)**: Three new `AuditAction` enum values — `IDEA_REVIEW_STARTED`, `IDEA_REVIEWED`, and `IDEA_REVIEW_ABANDONED` — extend the existing audit log table. `IDEA_REVIEW_STARTED` metadata contains the idea ID and reviewer ID. `IDEA_REVIEWED` metadata additionally contains the decision (`ACCEPTED`/`REJECTED`) and a truncated comment summary. `IDEA_REVIEW_ABANDONED` metadata contains the idea ID, the original reviewer ID, and the SUPERADMIN actor ID.
 
 ---
 
