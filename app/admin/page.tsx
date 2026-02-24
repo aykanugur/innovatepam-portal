@@ -16,6 +16,7 @@ import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import DashboardStats from '@/components/admin/dashboard-stats'
 import PendingQueue from '@/components/admin/pending-queue'
+import { GlowCard } from '@/components/ui/glow-card'
 
 export default async function AdminPage() {
   const session = await auth()

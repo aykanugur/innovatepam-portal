@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { logoutAction } from '@/lib/actions/logout'
+import { GlowCard } from '@/components/ui/glow-card'
 
 export const metadata = {
   title: 'Dashboard — InnovatEPAM',
@@ -194,33 +195,7 @@ export default async function DashboardPage() {
         {/* Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map(({ href, icon, label, desc, glow }) => (
-            <Link
-              key={href}
-              href={href}
-              className="group relative rounded-2xl p-6 transition-all duration-300"
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.background = 'rgba(255,255,255,0.055)'
-                el.style.border = `1px solid ${glow}44`
-                el.style.boxShadow = `0 4px 24px ${glow}18`
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.background = 'rgba(255,255,255,0.03)'
-                el.style.border = '1px solid rgba(255,255,255,0.07)'
-                el.style.boxShadow = ''
-              }}
-            >
-              <div className="mb-3 text-2xl">{icon}</div>
-              <h2 className="mb-1 text-sm font-semibold text-white">{label}</h2>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {desc}
-              </p>
-            </Link>
+            <GlowCard key={href} href={href} icon={icon} label={label} desc={desc} glow={glow} />
           ))}
         </div>
       </main>
