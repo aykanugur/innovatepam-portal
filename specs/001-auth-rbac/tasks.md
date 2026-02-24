@@ -68,8 +68,8 @@
 
 **Independent Test**: Create a User + VerificationToken row directly in DB. Visit `/verify-email?token=<token>`. Confirm `emailVerified=true` in User row and VerificationToken row deleted. Visit same URL again → "Already verified" state.
 
-- [ ] T015 [US5] Create `app/(auth)/verify-email/page.tsx` — `async` Server Component; extract `token` from `searchParams`; `prisma.verificationToken.findUnique({ where: { token } })`; if not found → render "Invalid or already used link" state; if `expires < now` → render "Link expired" state with copy "This verification link is invalid or has expired."; if valid → `prisma.user.update({ where: { email }, data: { emailVerified: true } })`, `prisma.verificationToken.delete({ where: { token } })`, log `verify.success` → render "Email verified! You can now sign in." with link to `/login`
-- [ ] T016 [P] [US5] Create `app/api/auth/verify-email/route.ts` — `GET` handler (programmatic): same token-lookup logic as T015; on success returns `{ message: "Email verified" }` + sets flag; on expired returns 400 `{ error: "Verification link has expired. Please register again." }`; on not-found returns 404 `{ error: "Invalid verification link." }`
+- [x] T015 [US5] Create `app/(auth)/verify-email/page.tsx` — `async` Server Component; extract `token` from `searchParams`; `prisma.verificationToken.findUnique({ where: { token } })`; if not found → render "Invalid or already used link" state; if `expires < now` → render "Link expired" state with copy "This verification link is invalid or has expired."; if valid → `prisma.user.update({ where: { email }, data: { emailVerified: true } })`, `prisma.verificationToken.delete({ where: { token } })`, log `verify.success` → render "Email verified! You can now sign in." with link to `/login`
+- [x] T016 [P] [US5] Create `app/api/auth/verify-email/route.ts` — `GET` handler (programmatic): same token-lookup logic as T015; on success returns `{ message: "Email verified" }` + sets flag; on expired returns 400 `{ error: "Verification link has expired. Please register again." }`; on not-found returns 404 `{ error: "Invalid verification link." }`
 
 **Checkpoint**: Full email verification flow works. Registered users can activate their account.
 
@@ -81,10 +81,10 @@
 
 **Independent Test**: Register a user (verification disabled), then `POST /api/auth/callback/credentials` with correct credentials → session cookie set, redirect to `/dashboard`. Submit wrong password 5× → 6th attempt returns rate-limit error.
 
-- [ ] T017 [US6] Create `components/auth/login-form.tsx` — `'use client'` form; Zod schema: `email` (string), `password` (string); calls `signIn('credentials', { email, password, redirect: false })`; handles `error` param from URL: `CredentialsSignin` → "Invalid email or password.", `RateLimited` → "Too many login attempts. Please try again in 15 minutes.", `UnverifiedEmail` → "Please verify your email before signing in."; on success reads `callbackUrl` from params and `router.push`
-- [ ] T018 [US6] Create `app/(auth)/login/page.tsx` — Server Component; redirect to `/dashboard` if already authenticated; read `error` and `verified` from `searchParams`; if `verified=1` show success banner "Email verified! You can now sign in."; render `<LoginForm />`
-- [ ] T019 [P] [US6] Create `app/forbidden/page.tsx` — Server Component; renders "You don't have permission to access this page." with back-to-dashboard link; HTTP 403 status via `notFound()` alternative or response metadata
-- [ ] T020 [P] [US6] Create `app/dashboard/page.tsx` — protected Server Component; call `auth()` → redirect to `/login` if no session (proxy.ts already handles this, but defensive check); render greeting with `session.user.displayName`
+- [x] T017 [US6] Create `components/auth/login-form.tsx` — `'use client'` form; Zod schema: `email` (string), `password` (string); calls `signIn('credentials', { email, password, redirect: false })`; handles `error` param from URL: `CredentialsSignin` → "Invalid email or password.", `RateLimited` → "Too many login attempts. Please try again in 15 minutes.", `UnverifiedEmail` → "Please verify your email before signing in."; on success reads `callbackUrl` from params and `router.push`
+- [x] T018 [US6] Create `app/(auth)/login/page.tsx` — Server Component; redirect to `/dashboard` if already authenticated; read `error` and `verified` from `searchParams`; if `verified=1` show success banner "Email verified! You can now sign in."; render `<LoginForm />`
+- [x] T019 [P] [US6] Create `app/forbidden/page.tsx` — Server Component; renders "You don't have permission to access this page." with back-to-dashboard link; HTTP 403 status via `notFound()` alternative or response metadata
+- [x] T020 [P] [US6] Create `app/dashboard/page.tsx` — protected Server Component; call `auth()` → redirect to `/login` if no session (proxy.ts already handles this, but defensive check); render greeting with `session.user.displayName`
 
 **Checkpoint**: Full login → session → dashboard flow works. Logout clears session. Rate limiting blocks after 5 failures.
 
