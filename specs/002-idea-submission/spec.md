@@ -9,6 +9,18 @@
 
 ---
 
+## Clarifications
+
+### Session 2026-02-24
+
+- Q: Can an idea author delete their own idea after it has progressed beyond "Submitted" status? → A: Authors may only delete ideas with `status=Submitted`; the delete button is **hidden** (not merely disabled) for ideas with status Under Review, Accepted, or Rejected.
+- Q: Is the status filter on the idea list required for P1 or deferred? → A: Only the **category filter** is required for P1; the status filter is a deferred stretch goal for a later sprint.
+- Q: When an idea with an attachment is deleted, should the blob file also be deleted? → A: The blob file is **left in storage**; orphaned file cleanup is handled by a separate retention policy outside this epic.
+- Q: Should there be a rate limit on idea submissions to prevent spam? → A: **Soft limit** — the API MUST reject a new submission from the same authenticated user if they submitted within the last 60 seconds; respond with HTTP 429.
+- Q: What form does the deletion confirmation step take? → A: **Modal dialog overlay** with an anti-accidental-deletion input: the user must type their profile name exactly (case-sensitive) into a text field before the "Confirm Delete" button becomes active.
+
+---
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 — Submit an Idea (Priority: P1)
@@ -65,7 +77,7 @@ A logged-in employee clicks an idea to read its full content, see who submitted 
 1. **Given** I visit the detail page of a public idea, **When** the page loads, **Then** I see the full title, description, author name, category, visibility, status badge, and submission date.
 2. **Given** the idea has been reviewed, **When** I view the detail page, **Then** I see a review card with the decision (Accepted / Rejected), the reviewer's name, review date, and their written comment.
 3. **Given** file attachment is enabled and the idea has an attachment, **When** I view the detail page, **Then** I see a "Download Attachment" link for the file.
-4. **Given** I am the author of a submitted (not yet reviewed) idea, **When** I view its detail page, **Then** I see a "Delete" button; clicking it removes the idea after a confirmation prompt.
+4. **Given** I am the author of an idea with status "Submitted", **When** I view its detail page, **Then** I see a "Delete" button. Clicking it opens a **modal dialog** containing a text input and a disabled "Confirm Delete" button. The "Confirm Delete" button MUST remain disabled until I type my profile name exactly (case-sensitive) into the input; on confirmation the idea is deleted and I am redirected to the My Ideas page. If the idea has any other status (Under Review, Accepted, Rejected), the Delete button is not shown.
 5. **Given** I visit the detail page of a private idea that belongs to another employee and I am not an admin, **When** the page loads, **Then** I receive a "Not Found" response.
 6. **Given** the idea ID does not exist, **When** I navigate to its URL, **Then** I receive a "Not Found" response.
 
@@ -93,7 +105,7 @@ A logged-in employee visits their personal ideas page to see only their own subm
 - A file attachment upload fails mid-submission — the idea is saved without an attachment and the employee sees a non-blocking warning: "File upload failed. Idea saved without attachment."
 - An employee submits the form while their session has expired — they are redirected to login; on returning the form state is lost (no draft persistence in P1 scope).
 - A page number typed manually in the URL exceeds the total pages — the system shows an empty state rather than an error.
-- An admin deletes a reviewed idea — the review record is removed together with the idea.
+- An admin deletes a reviewed idea — the review record is removed together with the idea; the associated blob file (if any) is **not** deleted and remains in storage for separate cleanup.
 - Attachment link in blob storage becomes unavailable — the detail page shows "Attachment unavailable" instead of a broken link.
 
 ---
@@ -119,7 +131,7 @@ A logged-in employee visits their personal ideas page to see only their own subm
 - **FR-010**: ADMIN and SUPERADMIN users MUST see all ideas regardless of visibility.
 - **FR-011**: The list MUST display at most 20 ideas per page with "Previous / Page X of Y / Next" pagination controls.
 - **FR-012**: Each idea card MUST show: title, author name, category, status badge (color-coded), and relative submission time.
-- **FR-013**: A category filter MUST be available; applying it narrows results to matching ideas and updates the page URL with the selected filter.
+- **FR-013**: A category filter MUST be available; applying it narrows results to matching ideas and updates the page URL with the selected filter. A status filter is explicitly out of scope for P1 (deferred stretch goal).
 - **FR-014**: When no ideas match the active filter, an empty state MUST be shown with a "Submit Idea" call-to-action.
 - **FR-015**: Status badge colors MUST follow: Submitted=gray, Under Review=yellow, Accepted=green, Rejected=red.
 
@@ -128,7 +140,7 @@ A logged-in employee visits their personal ideas page to see only their own subm
 - **FR-016**: The detail page MUST display: title, full description, author display name, category, visibility, status badge, and submission date.
 - **FR-017**: When the idea has a review record, the detail page MUST display the review decision, reviewer name, review date, and the reviewer's written comment.
 - **FR-018**: When `FEATURE_FILE_ATTACHMENT_ENABLED=true` and the idea has an attachment, a "Download Attachment" link MUST be shown.
-- **FR-019**: An employee viewing their own idea with status "Submitted" MUST see a "Delete" button; deletion MUST require a confirmation step.
+- **FR-019**: An employee viewing their own idea with status "Submitted" MUST see a "Delete" button. Clicking it MUST open a modal dialog overlay. The modal MUST contain a text input and a "Confirm Delete" button. The "Confirm Delete" button MUST remain disabled until the value of the text input exactly matches (case-sensitive) the authenticated user's profile name. On confirmation, the idea record is deleted and the user is redirected to the My Ideas page. For all other statuses (Under Review, Accepted, Rejected), the Delete button MUST be hidden entirely — not disabled — for the author.
 - **FR-020**: ADMIN and SUPERADMIN users MUST be able to delete any idea.
 - **FR-021**: Private ideas belonging to other employees MUST return "Not Found" to SUBMITTER-role viewers.
 - **FR-022**: Non-existent idea IDs MUST return "Not Found."
@@ -143,6 +155,8 @@ A logged-in employee visits their personal ideas page to see only their own subm
 
 - **FR-026**: All mutations (create, delete) MUST be logged as structured events for audit purposes.
 - **FR-027**: No unauthenticated request may read or write idea data.
+- **FR-028**: When an idea with a file attachment is deleted, the blob file MUST NOT be removed; the system stores only the DB record deletion. Orphaned blob cleanup is explicitly out of scope for this epic.
+- **FR-029**: The `POST /api/ideas` handler MUST reject a submission from an authenticated user if their previous submission was made within the last 60 seconds (server-side check). The response MUST be HTTP 429 with an informative error message indicating when the user may resubmit.
 
 ---
 
