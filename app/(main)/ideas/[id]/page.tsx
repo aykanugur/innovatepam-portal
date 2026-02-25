@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import IdeaDetail from '@/components/ideas/idea-detail'
+import type { FieldDefinition } from '@/types/field-template'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -52,6 +53,16 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   if (!canAccess) notFound()
 
   const attachmentEnabled = process.env.FEATURE_FILE_ATTACHMENT_ENABLED === 'true'
+  const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+
+  // T015 — fetch field template for the idea's category when flag is on (FR-010)
+  let fieldTemplates: FieldDefinition[] | null = null
+  if (smartFormsEnabled) {
+    const template = await db.categoryFieldTemplate.findUnique({
+      where: { category: idea.category },
+    })
+    fieldTemplates = template ? (template.fields as unknown as FieldDefinition[]) : null
+  }
 
   const currentUserRecord = await db.user.findUnique({
     where: { id: userId },
@@ -101,6 +112,9 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         }
         currentUser={currentUser}
         attachmentEnabled={attachmentEnabled}
+        dynamicFields={idea.dynamicFields as Record<string, unknown> | null}
+        fieldTemplates={fieldTemplates}
+        smartFormsEnabled={smartFormsEnabled}
       />
     </div>
   )

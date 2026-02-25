@@ -18,6 +18,7 @@ import DecisionCard from '@/components/admin/decision-card'
 import AbandonReviewButton from '@/components/admin/abandon-review-button'
 import { STATUS_BADGE_CLASSES } from '@/constants/status-badges'
 import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
+import type { FieldDefinition } from '@/types/field-template'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -64,6 +65,16 @@ export default async function AdminReviewPage({ params }: PageProps) {
   const isSuperAdmin = dbUser.role === 'SUPERADMIN'
   const isDecided = idea.status === 'ACCEPTED' || idea.status === 'REJECTED'
   const isUnderReview = idea.status === 'UNDER_REVIEW'
+
+  // T014 — fetch field template for the idea's category when Smart Forms flag is on
+  const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+  let fieldTemplates: FieldDefinition[] | null = null
+  if (smartFormsEnabled) {
+    const template = await db.categoryFieldTemplate.findUnique({
+      where: { category: idea.category },
+    })
+    fieldTemplates = template ? (template.fields as unknown as FieldDefinition[]) : null
+  }
 
   const currentUser = {
     id: session.user.id,
@@ -127,6 +138,9 @@ export default async function AdminReviewPage({ params }: PageProps) {
               decidedAt: idea.review.decidedAt,
               reviewer: idea.review.reviewer,
             }}
+            dynamicFields={idea.dynamicFields as Record<string, unknown> | null}
+            fieldTemplates={fieldTemplates}
+            smartFormsEnabled={smartFormsEnabled}
           />
         )}
 

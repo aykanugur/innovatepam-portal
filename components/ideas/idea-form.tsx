@@ -16,6 +16,8 @@ import { useRouter } from 'next/navigation'
 import { CATEGORIES, type CategorySlug } from '@/constants/categories'
 import { CreateIdeaSchema } from '@/lib/validations/idea'
 import { createIdeaAction } from '@/lib/actions/create-idea'
+import DynamicFieldSection from '@/components/ideas/dynamic-field-section'
+import type { FieldDefinition } from '@/types/field-template'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,9 +50,14 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024 // 5 MB
 interface IdeaFormProps {
   /** When true, renders the optional file attachment field (T013) */
   attachmentEnabled: boolean
+  /**
+   * T010 — Smart Forms: category field templates pre-loaded at RSC render time.
+   * null when FEATURE_SMART_FORMS_ENABLED=false (FR-010).
+   */
+  templates?: Record<CategorySlug, FieldDefinition[]> | null
 }
 
-export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
+export default function IdeaForm({ attachmentEnabled, templates }: IdeaFormProps) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -61,6 +68,9 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
     visibility: 'PUBLIC',
   })
   const [errors, setErrors] = useState<FormErrors>({})
+  // T010 — Smart Forms: controlled dynamic field values (FR-004)
+  const [dynamicValues, setDynamicValues] = useState<Record<string, string | number>>({})
+  const [dynamicErrors, setDynamicErrors] = useState<Record<string, string>>({})
   const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -73,6 +83,11 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
     setForm((prev) => ({ ...prev, [name]: value }))
     // Clear field error on change
     setErrors((prev) => ({ ...prev, [name]: undefined }))
+    // FR-004: Reset only dynamic fields when category changes
+    if (name === 'category') {
+      setDynamicValues({})
+      setDynamicErrors({})
+    }
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -153,6 +168,10 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
       formData.append('description', parsed.data.description)
       formData.append('category', parsed.data.category)
       formData.append('visibility', parsed.data.visibility)
+      // T010 — serialize dynamic fields if flag is on and values exist (FR-002)
+      if (templates && Object.keys(dynamicValues).length > 0) {
+        formData.append('dynamicFields', JSON.stringify(dynamicValues))
+      }
       if (file) {
         formData.append('attachment', file)
       }
@@ -311,6 +330,16 @@ export default function IdeaForm({ attachmentEnabled }: IdeaFormProps) {
           </p>
         ) : null}
       </div>
+
+      {/* T010 — Dynamic fields section (FR-003): pre-loaded, shown synchronously */}
+      {templates && form.category && templates[form.category as CategorySlug] ? (
+        <DynamicFieldSection
+          fields={templates[form.category as CategorySlug]}
+          values={dynamicValues}
+          onChange={setDynamicValues}
+          errors={dynamicErrors}
+        />
+      ) : null}
 
       {/* Visibility */}
       <fieldset className="space-y-2">

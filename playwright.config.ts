@@ -24,6 +24,8 @@ export default defineConfig({
     timeout: 120 * 1000,
     env: {
       E2E_ENABLED: 'true',
+      // Enable Smart Forms feature for E2E tests (T016)
+      FEATURE_SMART_FORMS_ENABLED: 'true',
     },
   },
 })

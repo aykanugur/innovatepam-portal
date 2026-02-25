@@ -3,10 +3,13 @@
  *
  * Read-only card shown after a review is finalized (ACCEPTED or REJECTED).
  * Renders: decision badge (green/red), reviewer display name, comment, decidedAt.
+ * T014: also renders dynamic fields (Smart Forms) in read-only mode when present.
  *
  * Server component — no client-side state needed.
  * Lives in components/admin/decision-card.tsx (T016)
  */
+import type { FieldDefinition } from '@/types/field-template'
+import DynamicFieldSection from '@/components/ideas/dynamic-field-section'
 
 interface DecisionCardProps {
   review: {
@@ -17,9 +20,20 @@ interface DecisionCardProps {
       displayName: string | null
     } | null
   }
+  /** Parsed dynamic fields stored on the Idea (FR-002) */
+  dynamicFields?: Record<string, unknown> | null
+  /** Field definitions for the idea's category (from CategoryFieldTemplate) */
+  fieldTemplates?: FieldDefinition[] | null
+  /** Whether FEATURE_SMART_FORMS_ENABLED=true */
+  smartFormsEnabled?: boolean
 }
 
-export default function DecisionCard({ review }: DecisionCardProps) {
+export default function DecisionCard({
+  review,
+  dynamicFields,
+  fieldTemplates,
+  smartFormsEnabled,
+}: DecisionCardProps) {
   const isAccepted = review.decision === 'ACCEPTED'
 
   const decidedAtStr = review.decidedAt
@@ -62,6 +76,16 @@ export default function DecisionCard({ review }: DecisionCardProps) {
         {review.reviewer?.displayName ? `Reviewed by ${review.reviewer.displayName}` : 'Reviewed'}
         {decidedAtStr ? ` on ${decidedAtStr}` : ''}
       </p>
+
+      {/* T014 — Smart Forms: show dynamic fields in read-only mode (FR-008) */}
+      {smartFormsEnabled && fieldTemplates && dynamicFields ? (
+        <DynamicFieldSection
+          fields={fieldTemplates}
+          values={dynamicFields as Record<string, string | number>}
+          onChange={() => {}}
+          readOnly
+        />
+      ) : null}
     </div>
   )
 }

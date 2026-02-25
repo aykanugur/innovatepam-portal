@@ -14,6 +14,8 @@ import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
 import type { IdeaStatus, IdeaVisibility } from '@/lib/generated/prisma/client'
 import DeleteIdeaModal from '@/components/ideas/delete-idea-modal'
 import AdminDeleteButton from '@/components/ideas/admin-delete-button'
+import DynamicFieldSection from '@/components/ideas/dynamic-field-section'
+import type { FieldDefinition } from '@/types/field-template'
 
 interface IdeaReviewDetail {
   // FR-007, SC-002: nullable — IdeaReview.decision and .comment are null
@@ -44,6 +46,12 @@ interface IdeaDetailProps {
   }
   /** Whether FEATURE_FILE_ATTACHMENT_ENABLED=true */
   attachmentEnabled: boolean
+  /** Parsed dynamic fields stored on the Idea (FR-002) */
+  dynamicFields?: Record<string, unknown> | null
+  /** Field definitions for the idea's category (from CategoryFieldTemplate) */
+  fieldTemplates?: FieldDefinition[] | null
+  /** Whether FEATURE_SMART_FORMS_ENABLED=true */
+  smartFormsEnabled?: boolean
 }
 
 export default function IdeaDetail({
@@ -60,6 +68,9 @@ export default function IdeaDetail({
   review,
   currentUser,
   attachmentEnabled,
+  dynamicFields,
+  fieldTemplates,
+  smartFormsEnabled,
 }: IdeaDetailProps) {
   const badge = STATUS_BADGE_CLASSES[status]
   const categoryLabel = CATEGORY_LABEL[category as CategorySlug] ?? category
@@ -112,6 +123,16 @@ export default function IdeaDetail({
           {description}
         </p>
       </div>
+
+      {/* T015 — Smart Forms: dynamic fields in read-only mode (FR-008) */}
+      {smartFormsEnabled && fieldTemplates && dynamicFields ? (
+        <DynamicFieldSection
+          fields={fieldTemplates}
+          values={dynamicFields as Record<string, string | number>}
+          onChange={() => {}}
+          readOnly
+        />
+      ) : null}
 
       {/* Attachment (FR-018 / FR-030) */}
       {attachmentUrl ? (

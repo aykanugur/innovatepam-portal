@@ -9,6 +9,7 @@
 import { PrismaClient } from '../lib/generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { hashPassword, generateToken } from '../lib/auth-utils'
+import { CATEGORY_FIELD_TEMPLATES } from '../constants/field-templates'
 
 // ─── Seed data constants ──────────────────────────────────────────────────────
 
@@ -166,6 +167,19 @@ async function main() {
     } else {
       console.log(`\nSkipping idea seed — ${existingIdeaCount} ideas already exist.`)
     }
+
+    // ── T006: Seed CategoryFieldTemplate rows (Smart Forms) ─────────────────
+    // Idempotent: upserts on category slug so re-runs are safe (FR-011).
+    for (const [slug, fields] of Object.entries(CATEGORY_FIELD_TEMPLATES)) {
+      await prisma.categoryFieldTemplate.upsert({
+        where: { category: slug },
+        update: { fields: fields as object[], version: 1 },
+        create: { category: slug, fields: fields as object[], version: 1 },
+      })
+    }
+    console.log(
+      `\nSeeded/updated ${Object.keys(CATEGORY_FIELD_TEMPLATES).length} CategoryFieldTemplate rows.`
+    )
   } finally {
     await prisma.$disconnect()
   }
