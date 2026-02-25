@@ -21,7 +21,8 @@ import path from 'node:path'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { ideaSubmitRateLimiter } from '@/lib/rate-limit'
-import { CreateIdeaSchema } from '@/lib/validations/idea'
+import { CreateIdeaSchema, buildDynamicFieldsSchema } from '@/lib/validations/idea'
+import type { DynamicFields } from '@/types/field-template'
 
 export interface CreateIdeaResult {
   id?: string
@@ -68,6 +69,53 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
   if (!parsed.success) {
     const firstError = Object.values(parsed.error.flatten().fieldErrors).flat()[0]
     return { error: firstError ?? 'Validation failed.' }
+  }
+
+  // ── Dynamic fields (FR-010, FR-002) ──────────────────────────────────────
+  const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+  let validatedDynamicFields: DynamicFields | null = null
+
+  if (smartFormsEnabled) {
+    const rawDynamic = formData.get('dynamicFields')
+
+    if (rawDynamic && typeof rawDynamic === 'string' && rawDynamic !== '{}' && rawDynamic !== '') {
+      // Parse the JSON payload (FR-018: unknown keys stripped by Zod .strip())
+      let parsedDynamic: unknown
+      try {
+        parsedDynamic = JSON.parse(rawDynamic)
+      } catch {
+        return { error: 'Invalid dynamic fields format.' }
+      }
+
+      // Fetch template for the submitted category
+      const template = await db.categoryFieldTemplate.findUnique({
+        where: { category: parsed.data.category },
+      })
+
+      if (template && Array.isArray(template.fields) && template.fields.length > 0) {
+        // Build and apply the dynamic Zod schema (FR-005, FR-006, FR-013, FR-016, FR-018)
+        const dynamicSchema = buildDynamicFieldsSchema(
+          template.fields as unknown as Parameters<typeof buildDynamicFieldsSchema>[0]
+        )
+        const dynamicResult = dynamicSchema.safeParse(parsedDynamic)
+
+        if (!dynamicResult.success) {
+          const firstDynamicError = Object.values(
+            dynamicResult.error.flatten().fieldErrors
+          ).flat()[0]
+          return { error: firstDynamicError ?? 'Dynamic field validation failed.' }
+        }
+
+        // Only include fields that have actual values (optional blank fields are excluded)
+        const nonEmptyFields: DynamicFields = {}
+        for (const [k, v] of Object.entries(dynamicResult.data as Record<string, unknown>)) {
+          if (v !== undefined && v !== '' && v !== null) {
+            nonEmptyFields[k] = v as string | number
+          }
+        }
+        validatedDynamicFields = Object.keys(nonEmptyFields).length > 0 ? nonEmptyFields : null
+      }
+    }
   }
 
   // ── File attachment ───────────────────────────────────────────────────────
@@ -125,6 +173,8 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
         status: 'SUBMITTED',
         authorId: userId,
         attachmentPath,
+        // T009 — Smart Forms: persist validated dynamic fields (FR-002)
+        dynamicFields: validatedDynamicFields ?? undefined,
       },
     })
 
@@ -136,6 +186,8 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
         metadata: {
           ideaTitle: idea.title,
           visibility: idea.visibility,
+          // FR-012: include dynamic fields in audit log when present
+          ...(validatedDynamicFields ? { dynamicFields: validatedDynamicFields } : {}),
         },
       },
     })

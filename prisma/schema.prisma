@@ -66,6 +66,9 @@ model Idea {
   status         IdeaStatus     @default(SUBMITTED)
   visibility     IdeaVisibility @default(PUBLIC)
   attachmentPath String?
+  // T004 — Smart Forms: nullable JSON map of dynamic field values (FR-002)
+  // null for V1 ideas or when FEATURE_SMART_FORMS_ENABLED=false
+  dynamicFields  Json?
 
   authorId String
   author   User       @relation("UserIdeas", fields: [authorId], references: [id])
@@ -74,6 +77,21 @@ model Idea {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// T004 — Smart Forms: stores the field template for each idea category (FR-001)
+// Populated by prisma/seed.ts; one row per CategorySlug; queried at page render.
+model CategoryFieldTemplate {
+  id        String   @id @default(cuid())
+  /// CategorySlug value matching Idea.category (e.g., "process-improvement")
+  category  String
+  /// Array<FieldDefinition> serialised as JSON
+  fields    Json
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category])
 }
 
 model IdeaReview {

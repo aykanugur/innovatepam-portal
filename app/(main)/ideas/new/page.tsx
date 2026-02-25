@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/auth'
+import { db } from '@/lib/db'
 import IdeaForm from '@/components/ideas/idea-form'
 import type { Metadata } from 'next'
+import type { CategorySlug } from '@/constants/categories'
+import type { FieldDefinition } from '@/types/field-template'
 
 export const metadata: Metadata = {
   title: 'Submit an Idea — InnovatEPAM',
@@ -20,6 +23,21 @@ export default async function SubmitIdeaPage() {
   if (!session) redirect('/login?callbackUrl=/ideas/new')
 
   const attachmentEnabled = process.env.FEATURE_FILE_ATTACHMENT_ENABLED === 'true'
+
+  // T011 — Smart Forms: fetch all 5 category templates when flag on (FR-003, FR-010)
+  // When flag off: skip DB round-trip entirely (spec FR-010 clarification).
+  const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+  let templates: Record<CategorySlug, FieldDefinition[]> | null = null
+
+  if (smartFormsEnabled) {
+    const rows = await db.categoryFieldTemplate.findMany()
+    if (rows.length > 0) {
+      templates = {} as Record<CategorySlug, FieldDefinition[]>
+      for (const row of rows) {
+        templates[row.category as CategorySlug] = row.fields as unknown as FieldDefinition[]
+      }
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -47,7 +65,7 @@ export default async function SubmitIdeaPage() {
         className="rounded-2xl p-6"
         style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <IdeaForm attachmentEnabled={attachmentEnabled} />
+        <IdeaForm attachmentEnabled={attachmentEnabled} templates={templates} />
       </div>
     </div>
   )

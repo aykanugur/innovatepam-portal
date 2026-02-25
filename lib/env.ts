@@ -20,6 +20,8 @@ export const envSchema = z.object({
   FEATURE_USER_MANAGEMENT_ENABLED: z.string().default('false'),
   FEATURE_FILE_ATTACHMENT_ENABLED: z.string().default('false'),
   FEATURE_ANALYTICS_ENABLED: z.string().default('false'),
+  // T002 — Smart Forms: category-specific dynamic fields (FR-010)
+  FEATURE_SMART_FORMS_ENABLED: z.string().default('false'),
 })
 
 export type Env = z.infer<typeof envSchema>

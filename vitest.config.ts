@@ -41,8 +41,8 @@ export default defineConfig(({ mode }) => {
         exclude: [
           'lib/generated/**',
           'node_modules/**',
-          // idea.ts belongs to Epic-03 and is not exercised by this epic's test suite
-          'lib/validations/idea.ts',
+          // idea.ts is now exercised by integration tests (T013 — create-idea-dynamic)
+          // Removed from exclude list as part of T018 Smart Forms coverage update
         ],
         thresholds: {
           lines: 80,
