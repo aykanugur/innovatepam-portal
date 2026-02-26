@@ -13,6 +13,8 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
+import { maskAuthorIfBlind } from '@/lib/blind-review'
 import ReviewActionPanel from '@/components/admin/review-action-panel'
 import DecisionCard from '@/components/admin/decision-card'
 import AbandonReviewButton from '@/components/admin/abandon-review-button'
@@ -106,6 +108,22 @@ export default async function AdminReviewPage({ params }: PageProps) {
     role: dbUser.role,
   }
 
+  // EPIC-V2-05: Blind Review — mask author identity from ADMINs during active review.
+  // Audit log entries are NOT masked (audit traceability supersedes objectivity — PRD V2.0 §9).
+  const blindReviewPipeline = await db.reviewPipeline.findFirst({
+    where: { categorySlug: idea.category ?? '' },
+    select: { blindReview: true },
+  })
+  const maskedAuthorName = maskAuthorIfBlind({
+    authorId: idea.authorId,
+    authorDisplayName: idea.author.displayName,
+    requesterId: session.user.id,
+    requesterRole: dbUser.role,
+    pipelineBlindReview: blindReviewPipeline?.blindReview ?? false,
+    ideaStatus: idea.status,
+    featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
+  })
+
   return (
     <main className="min-h-screen p-8" style={{ background: '#060608' }}>
       <div className="max-w-3xl mx-auto space-y-6">
@@ -131,7 +149,7 @@ export default async function AdminReviewPage({ params }: PageProps) {
                 {idea.title ?? 'Untitled'}
               </h1>
               <p className="text-sm" style={{ color: '#8888A8' }}>
-                By {idea.author.displayName} ·{' '}
+                By {maskedAuthorName} ·{' '}
                 {idea.category
                   ? (CATEGORY_LABEL[idea.category as CategorySlug] ?? idea.category)
                   : 'No category'}{' '}

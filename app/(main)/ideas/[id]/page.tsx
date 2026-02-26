@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
+import { maskAuthorIfBlind } from '@/lib/blind-review'
 import IdeaDetail from '@/components/ideas/idea-detail'
 import { AttachmentsTable, type AttachmentRow } from '@/components/ideas/attachments-table'
 import StageProgressStepper from '@/components/ideas/stage-progress-stepper'
@@ -96,6 +98,21 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     role,
   }
 
+  // EPIC-V2-05: Blind Review — mask author identity from ADMINs during active review
+  const blindReviewPipeline = await db.reviewPipeline.findFirst({
+    where: { categorySlug: idea.category ?? '' },
+    select: { blindReview: true },
+  })
+  const maskedAuthorName = maskAuthorIfBlind({
+    authorId: idea.authorId,
+    authorDisplayName: idea.author.displayName,
+    requesterId: userId,
+    requesterRole: role,
+    pipelineBlindReview: blindReviewPipeline?.blindReview ?? false,
+    ideaStatus: idea.status,
+    featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
+  })
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
@@ -114,7 +131,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         category={idea.category ?? ''}
         status={idea.status}
         visibility={idea.visibility}
-        authorName={idea.author.displayName}
+        authorName={maskedAuthorName}
         authorId={idea.authorId}
         createdAt={idea.createdAt.toISOString()}
         attachmentUrl={idea.attachmentPath}

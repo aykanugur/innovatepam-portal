@@ -201,6 +201,7 @@ model ReviewPipeline {
   name         String   // display name, e.g. "Default 2-Stage"
   categorySlug String   @unique // FK-by-convention to CATEGORIES constant slugs
   isDefault    Boolean  @default(false)
+  blindReview  Boolean  @default(false) // EPIC-V2-05: when true, author identity is masked from ADMINs during UNDER_REVIEW
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

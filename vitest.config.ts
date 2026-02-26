@@ -41,6 +41,8 @@ export default defineConfig(({ mode }) => {
           'lib/actions/claim-stage.ts',
           'lib/actions/complete-stage.ts',
           'lib/actions/resolve-escalation.ts',
+          // EPIC-V2-05: Blind Review masking utility
+          'lib/blind-review.ts',
         ],
         exclude: [
           'lib/generated/**',

@@ -4,6 +4,7 @@ import './globals.css'
 // Side-effect import: runs Zod env validation on every server start.
 // If any required variable is missing, Next.js fails fast with a clear error.
 import '@/lib/env'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -28,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable}`}>
-      <body>{children}</body>
+      <body>
+        <TooltipProvider>{children}</TooltipProvider>
+      </body>
     </html>
   )
 }

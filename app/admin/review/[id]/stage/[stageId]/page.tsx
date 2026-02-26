@@ -17,6 +17,8 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
+import { maskAuthorIfBlind } from '@/lib/blind-review'
 import StageCompletionPanel from '@/components/admin/stage-completion-panel'
 import type { Metadata } from 'next'
 
@@ -63,6 +65,7 @@ export default async function StageReviewPage({ params }: PageProps) {
           title: true,
           status: true,
           category: true,
+          authorId: true, // EPIC-V2-05: needed for blind review self-view exemption
           author: { select: { displayName: true } },
         },
       },
@@ -86,6 +89,22 @@ export default async function StageReviewPage({ params }: PageProps) {
 
   const stage = progress.stage
   const idea = progress.idea
+
+  // EPIC-V2-05: Blind Review — mask author identity from ADMINs during active review.
+  // Audit log entries are NOT masked (audit traceability supersedes objectivity — PRD V2.0 §9).
+  const blindReviewPipeline = await db.reviewPipeline.findFirst({
+    where: { categorySlug: idea.category ?? '' },
+    select: { blindReview: true },
+  })
+  const maskedAuthorName = maskAuthorIfBlind({
+    authorId: idea.authorId, // used for blind review self-view exemption (EPIC-V2-05)
+    authorDisplayName: idea.author.displayName,
+    requesterId: session.user.id,
+    requesterRole: dbUser.role,
+    pipelineBlindReview: blindReviewPipeline?.blindReview ?? false,
+    ideaStatus: idea.status,
+    featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
+  })
 
   return (
     <div
@@ -127,7 +146,7 @@ export default async function StageReviewPage({ params }: PageProps) {
             </span>
           </div>
           <p className="text-xs" style={{ color: '#8888A8' }}>
-            Submitted by {idea.author.displayName ?? 'Unknown'} · Category: {idea.category}
+            Submitted by {maskedAuthorName} · Category: {idea.category}
           </p>
           <p className="text-xs" style={{ color: '#555577' }}>
             Stage {stage.order}: {stage.name}

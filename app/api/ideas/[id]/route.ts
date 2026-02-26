@@ -11,6 +11,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
+import { maskAuthorIfBlind } from '@/lib/blind-review'
 import { apiError } from '@/lib/api-error'
 
 // ─── GET /api/ideas/[id] ─────────────────────────────────────────────────────
@@ -44,6 +46,21 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
   if (!canAccess) return apiError(404, 'Not found')
 
+  // EPIC-V2-05: Blind Review — mask author identity from ADMINs during active review
+  const blindReviewPipeline = await db.reviewPipeline.findFirst({
+    where: { categorySlug: idea.category ?? '' },
+    select: { blindReview: true },
+  })
+  const maskedAuthorName = maskAuthorIfBlind({
+    authorId: idea.authorId,
+    authorDisplayName: idea.author.displayName,
+    requesterId: userId,
+    requesterRole: role,
+    pipelineBlindReview: blindReviewPipeline?.blindReview ?? false,
+    ideaStatus: idea.status,
+    featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
+  })
+
   return NextResponse.json({
     data: {
       id: idea.id,
@@ -52,7 +69,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       category: idea.category,
       status: idea.status,
       visibility: idea.visibility,
-      authorName: idea.author.displayName,
+      authorName: maskedAuthorName,
       authorId: idea.authorId,
       attachmentUrl: idea.attachmentPath,
       createdAt: idea.createdAt.toISOString(),
@@ -97,6 +114,7 @@ export async function DELETE(
   await db.idea.delete({ where: { id } })
 
   // Write AuditLog (IDEA_DELETED) — FR-026
+  // Blind review masking not applied — audit writes record actor identity, not idea author. (EPIC-V2-05 FR-011)
   await db.auditLog.create({
     data: {
       actorId: userId,

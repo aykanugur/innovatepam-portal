@@ -36,6 +36,8 @@ export const envSchema = z.object({
   CRON_SECRET: z.string().min(32, 'CRON_SECRET must be at least 32 characters'),
   // EPIC-V2-04 — Multi-Stage Review Pipeline: routes reviews through pipeline stages when true
   FEATURE_MULTI_STAGE_REVIEW_ENABLED: z.string().default('false'),
+  // EPIC-V2-05 — Blind Review: masks author identity from ADMINs during active review when true
+  FEATURE_BLIND_REVIEW_ENABLED: z.string().default('false'),
 })
 
 export type Env = z.infer<typeof envSchema>

@@ -19,6 +19,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
 import PipelineConfigForm from '@/components/pipeline/pipeline-config-form'
 import { CATEGORIES, type CategorySlug } from '@/constants/categories'
 import type { Metadata } from 'next'
@@ -53,6 +54,19 @@ export default async function ReviewConfigPage() {
 
   // Build a lookup map: categorySlug → pipeline
   const pipelineBySlug = Object.fromEntries(pipelines.map((p) => [p.categorySlug, p]))
+
+  // EPIC-V2-05: Count UNDER_REVIEW ideas per category for hasActiveReviews warning
+  const activeReviewGroups = await db.idea.groupBy({
+    by: ['category'],
+    where: { status: 'UNDER_REVIEW' },
+    _count: { id: true },
+  })
+  const activeCountBySlug: Record<string, number> = Object.fromEntries(
+    activeReviewGroups.map((g) => [g.category ?? '', g._count.id])
+  )
+
+  // EPIC-V2-05: Feature flag state for blind review
+  const blindReviewFlagEnabled = env.FEATURE_BLIND_REVIEW_ENABLED === 'true'
 
   return (
     <div
@@ -95,6 +109,9 @@ export default async function ReviewConfigPage() {
               key={slug}
               categorySlug={slug as CategorySlug}
               existing={pipelineBySlug[slug] ?? null}
+              userRole={dbUser.role}
+              featureFlagEnabled={blindReviewFlagEnabled}
+              hasActiveReviews={(activeCountBySlug[slug] ?? 0) > 0}
             />
           ))}
         </div>

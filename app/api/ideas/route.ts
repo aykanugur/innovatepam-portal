@@ -190,6 +190,7 @@ export async function POST(request: NextRequest) {
   })
 
   // Write AuditLog (IDEA_CREATED)
+  // Blind review masking not applied — audit writes record actor identity, not idea author. (EPIC-V2-05 FR-011)
   await db.auditLog.create({
     data: {
       actorId: userId,

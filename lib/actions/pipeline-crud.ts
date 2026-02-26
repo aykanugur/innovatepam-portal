@@ -124,7 +124,11 @@ export async function updatePipeline(
     return { error: parsed.error.errors[0].message, code: 'VALIDATION_ERROR' }
   }
 
-  const { pipelineId, name, stages } = parsed.data
+  const { pipelineId, name, stages, blindReview } = parsed.data
+
+  // Defence-in-depth: requireSuperAdmin() above guarantees SUPERADMIN role for this action.
+  // blindReview is explicitly restricted to SUPERADMIN only (EPIC-V2-05 FR-003).
+  // If somehow called without that guarantee, the requireSuperAdmin guard above will have already returned.
 
   try {
     const pipeline = await db.reviewPipeline.findUnique({
@@ -182,13 +186,27 @@ export async function updatePipeline(
           }
         }
 
-        // Update pipeline name if provided
-        if (name !== undefined) {
-          await tx.reviewPipeline.update({ where: { id: pipelineId }, data: { name } })
+        // Update pipeline name and/or blindReview if provided
+        if (name !== undefined || blindReview !== undefined) {
+          await tx.reviewPipeline.update({
+            where: { id: pipelineId },
+            data: {
+              ...(name !== undefined && { name }),
+              // EPIC-V2-05: SUPERADMIN-only blind review toggle
+              ...(blindReview !== undefined && { blindReview }),
+            },
+          })
         }
       })
-    } else if (name !== undefined) {
-      await db.reviewPipeline.update({ where: { id: pipelineId }, data: { name } })
+    } else if (name !== undefined || blindReview !== undefined) {
+      await db.reviewPipeline.update({
+        where: { id: pipelineId },
+        data: {
+          ...(name !== undefined && { name }),
+          // EPIC-V2-05: SUPERADMIN-only blind review toggle
+          ...(blindReview !== undefined && { blindReview }),
+        },
+      })
     }
 
     await db.auditLog.create({

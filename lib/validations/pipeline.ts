@@ -120,6 +120,8 @@ export const UpdatePipelineSchema = z.object({
     .min(1, 'Pipeline name is required')
     .max(80, 'Pipeline name must be 80 characters or fewer')
     .optional(),
+  // EPIC-V2-05 — Blind Review: SUPERADMIN-only field; server action guards per-field
+  blindReview: z.boolean().optional(),
   stages: z
     .array(StageInputSchema)
     .min(2, 'A pipeline must have at least 2 stages.')

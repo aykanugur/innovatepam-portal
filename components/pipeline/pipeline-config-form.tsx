@@ -18,6 +18,10 @@ import { useState, useTransition } from 'react'
 import StageRow from '@/components/pipeline/stage-row'
 import { createPipeline, updatePipeline } from '@/lib/actions/pipeline-crud'
 import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
+import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { EyeOff } from 'lucide-react'
 
 interface StageData {
   id?: string
@@ -32,6 +36,7 @@ interface PipelineConfigFormProps {
   existing?: {
     id: string
     name: string
+    blindReview?: boolean
     stages: {
       id: string
       name: string
@@ -40,9 +45,21 @@ interface PipelineConfigFormProps {
       isDecisionStage: boolean
     }[]
   } | null
+  /** Role of the currently logged-in user (EPIC-V2-05: SUPERADMIN sees blind review toggle) */
+  userRole?: string
+  /** Whether FEATURE_BLIND_REVIEW_ENABLED=true in env (EPIC-V2-05) */
+  featureFlagEnabled?: boolean
+  /** Whether there are UNDER_REVIEW ideas for this category (EPIC-V2-05 warning) */
+  hasActiveReviews?: boolean
 }
 
-export default function PipelineConfigForm({ categorySlug, existing }: PipelineConfigFormProps) {
+export default function PipelineConfigForm({
+  categorySlug,
+  existing,
+  userRole,
+  featureFlagEnabled,
+  hasActiveReviews,
+}: PipelineConfigFormProps) {
   const categoryLabel = CATEGORY_LABEL[categorySlug] ?? categorySlug
 
   const [stages, setStages] = useState<StageData[]>(
@@ -64,6 +81,8 @@ export default function PipelineConfigForm({ categorySlug, existing }: PipelineC
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
+  // EPIC-V2-05: Local blind review toggle state (SUPERADMIN only)
+  const [localBlindReview, setLocalBlindReview] = useState<boolean>(existing?.blindReview ?? false)
 
   // ── Local state helpers ──────────────────────────────────────────────────
   function updateStage(index: number, patch: Partial<StageData>) {
@@ -136,6 +155,8 @@ export default function PipelineConfigForm({ categorySlug, existing }: PipelineC
         result = await updatePipeline({
           pipelineId: existing.id,
           stages: stagesPayload,
+          // EPIC-V2-05: SUPERADMIN-only blind review toggle
+          ...(userRole === 'SUPERADMIN' && { blindReview: localBlindReview }),
         })
       } else {
         result = await createPipeline({
@@ -175,6 +196,66 @@ export default function PipelineConfigForm({ categorySlug, existing }: PipelineC
           </span>
         )}
       </div>
+
+      {/* Blind Review Toggle — SUPERADMIN only (EPIC-V2-05) */}
+      {userRole === 'SUPERADMIN' && (
+        <div
+          className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <div className="flex items-center gap-2 flex-1">
+            <EyeOff
+              className="w-4 h-4 flex-shrink-0"
+              style={{ color: localBlindReview && featureFlagEnabled ? '#00c8ff' : '#8888A8' }}
+            />
+            <label
+              htmlFor={`blind-review-${categorySlug}`}
+              className="text-sm cursor-pointer select-none"
+              style={{ color: !featureFlagEnabled ? '#8888A8' : '#F0F0FA' }}
+            >
+              Blind Review
+            </label>
+            {!featureFlagEnabled && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded cursor-help"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: '#8888A8' }}
+                  >
+                    disabled
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Blind review is not enabled in this environment</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <Switch
+            id={`blind-review-${categorySlug}`}
+            checked={localBlindReview}
+            onCheckedChange={(checked) => {
+              setLocalBlindReview(checked)
+              setSaved(false)
+            }}
+            disabled={!featureFlagEnabled}
+            aria-label="Enable blind review for this pipeline"
+          />
+        </div>
+      )}
+
+      {/* Active reviews warning (EPIC-V2-05 FR-007) */}
+      {userRole === 'SUPERADMIN' && hasActiveReviews && localBlindReview && featureFlagEnabled && (
+        <Alert className="border-amber-500/30 bg-amber-500/10">
+          <AlertDescription className="text-amber-400 text-sm">
+            This pipeline currently has ideas under review. Changing the blind review setting will
+            take effect immediately for all ongoing evaluations.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stage list */}
       <ol className="space-y-3 list-none p-0 m-0">
