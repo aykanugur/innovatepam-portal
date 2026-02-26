@@ -16,6 +16,7 @@ import { db } from '@/lib/db'
 import ReviewActionPanel from '@/components/admin/review-action-panel'
 import DecisionCard from '@/components/admin/decision-card'
 import AbandonReviewButton from '@/components/admin/abandon-review-button'
+import StageProgressStepper from '@/components/ideas/stage-progress-stepper'
 import type { AttachmentRow } from '@/components/ideas/attachments-table'
 import { STATUS_BADGE_CLASSES } from '@/constants/status-badges'
 import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
@@ -77,6 +78,7 @@ export default async function AdminReviewPage({ params }: PageProps) {
   // T014 — fetch field template for the idea's category when Smart Forms flag is on
   const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
   const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
+  const multiStageEnabled = process.env.FEATURE_MULTI_STAGE_REVIEW_ENABLED === 'true'
   let fieldTemplates: FieldDefinition[] | null = null
   if (smartFormsEnabled) {
     const template = idea.category
@@ -86,6 +88,18 @@ export default async function AdminReviewPage({ params }: PageProps) {
       : null
     fieldTemplates = template ? (template.fields as unknown as FieldDefinition[]) : null
   }
+
+  // T036 — fetch stage progress for stepper (US5)
+  const stageProgress = multiStageEnabled
+    ? await db.ideaStageProgress.findMany({
+        where: { ideaId: id },
+        include: {
+          stage: { select: { name: true, order: true, isDecisionStage: true } },
+          reviewer: { select: { displayName: true } },
+        },
+        orderBy: { stage: { order: 'asc' } },
+      })
+    : []
 
   const currentUser = {
     id: session.user.id,
@@ -142,6 +156,22 @@ export default async function AdminReviewPage({ params }: PageProps) {
             {idea.description ?? ''}
           </p>
         </div>
+
+        {/* T036 — Stage progress stepper (US5) */}
+        {stageProgress.length > 0 && (
+          <StageProgressStepper
+            stageProgress={stageProgress.map((sp) => ({
+              id: sp.id,
+              startedAt: sp.startedAt,
+              completedAt: sp.completedAt,
+              outcome: sp.outcome as 'PASS' | 'ESCALATE' | 'ACCEPTED' | 'REJECTED' | null,
+              comment: sp.comment,
+              stage: sp.stage,
+              reviewer: sp.reviewer,
+            }))}
+            viewerRole={dbUser.role as 'ADMIN' | 'SUPERADMIN'}
+          />
+        )}
 
         {/* Decision Card — shown when already decided */}
         {isDecided && idea.review && (

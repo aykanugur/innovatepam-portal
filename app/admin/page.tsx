@@ -17,6 +17,7 @@ import { db } from '@/lib/db'
 import DashboardStats from '@/components/admin/dashboard-stats'
 import PendingQueue from '@/components/admin/pending-queue'
 import { SuperAdminCards } from '@/components/admin/super-admin-cards'
+import EscalationQueue from '@/components/admin/escalation-queue'
 import { GlowCard } from '@/components/ui/glow-card'
 
 export default async function AdminPage() {
@@ -37,6 +38,7 @@ export default async function AdminPage() {
   }
 
   const isSuperAdmin = dbUser.role === 'SUPERADMIN'
+  const multiStageEnabled = process.env.FEATURE_MULTI_STAGE_REVIEW_ENABLED === 'true'
 
   // Parallel queries — FR-013 requires always-fresh data
   const [groupByStatus, pendingIdeas] = await Promise.all([
@@ -175,7 +177,21 @@ export default async function AdminPage() {
             createdAt: idea.createdAt.toISOString(),
             author: { displayName: idea.author.displayName },
           }))}
+          multiStageEnabled={multiStageEnabled}
         />
+
+        {/* Escalation queue — T033: visible to ADMIN and SUPERADMIN when flag is on */}
+        {multiStageEnabled && (
+          <section>
+            <h2
+              className="mb-3 text-sm font-semibold uppercase tracking-wide"
+              style={{ color: '#8888A8' }}
+            >
+              Escalated
+            </h2>
+            <EscalationQueue isSuperAdmin={isSuperAdmin} />
+          </section>
+        )}
 
         {/* SuperAdmin actions */}
         {isSuperAdmin && <SuperAdminCards />}

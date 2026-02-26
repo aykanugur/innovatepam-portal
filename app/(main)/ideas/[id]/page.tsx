@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import IdeaDetail from '@/components/ideas/idea-detail'
 import { AttachmentsTable, type AttachmentRow } from '@/components/ideas/attachments-table'
+import StageProgressStepper from '@/components/ideas/stage-progress-stepper'
 import type { FieldDefinition } from '@/types/field-template'
 import type { Metadata } from 'next'
 
@@ -58,6 +59,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   const attachmentEnabled = process.env.FEATURE_FILE_ATTACHMENT_ENABLED === 'true'
   const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
   const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+  const multiStageEnabled = process.env.FEATURE_MULTI_STAGE_REVIEW_ENABLED === 'true'
 
   // T015 — fetch field template for the idea's category when flag is on (FR-010)
   let fieldTemplates: FieldDefinition[] | null = null
@@ -69,6 +71,18 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       : null
     fieldTemplates = template ? (template.fields as unknown as FieldDefinition[]) : null
   }
+
+  // T036 — fetch stage progress for stepper (US5)
+  const stageProgress = multiStageEnabled
+    ? await db.ideaStageProgress.findMany({
+        where: { ideaId: id },
+        include: {
+          stage: { select: { name: true, order: true, isDecisionStage: true } },
+          reviewer: { select: { displayName: true } },
+        },
+        orderBy: { stage: { order: 'asc' } },
+      })
+    : []
 
   const currentUserRecord = await db.user.findUnique({
     where: { id: userId },
@@ -122,6 +136,28 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         fieldTemplates={fieldTemplates}
         smartFormsEnabled={smartFormsEnabled}
       />
+
+      {/* T036 — Stage progress stepper (US5) */}
+      {stageProgress.length > 0 && (
+        <div className="mt-6">
+          <StageProgressStepper
+            stageProgress={stageProgress.map((sp) => ({
+              id: sp.id,
+              startedAt: sp.startedAt,
+              completedAt: sp.completedAt,
+              outcome: sp.outcome as 'PASS' | 'ESCALATE' | 'ACCEPTED' | 'REJECTED' | null,
+              comment: sp.comment,
+              stage: sp.stage,
+              reviewer: sp.reviewer,
+            }))}
+            viewerRole={
+              role === 'ADMIN' || role === 'SUPERADMIN'
+                ? (role as 'ADMIN' | 'SUPERADMIN')
+                : 'SUBMITTER'
+            }
+          />
+        </div>
+      )}
 
       {/* T012 — Multi-attachments list (US-023) */}
       {multiAttachmentEnabled && idea.attachments.length > 0 && (

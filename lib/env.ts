@@ -34,6 +34,8 @@ export const envSchema = z.object({
   FEATURE_DRAFT_ENABLED: z.string().default('false'),
   // T001 — Draft Management: secret for cron endpoint auth (FR-010, FR-017)
   CRON_SECRET: z.string().min(32, 'CRON_SECRET must be at least 32 characters'),
+  // EPIC-V2-04 — Multi-Stage Review Pipeline: routes reviews through pipeline stages when true
+  FEATURE_MULTI_STAGE_REVIEW_ENABLED: z.string().default('false'),
 })
 
 export type Env = z.infer<typeof envSchema>

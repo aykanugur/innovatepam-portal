@@ -19,6 +19,8 @@
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
+import { claimStage } from '@/lib/actions/claim-stage'
 
 export interface StartReviewResult {
   success: boolean
@@ -88,6 +90,25 @@ export async function startReviewAction(
   // ── Self-review guard — FR-003, US-012 AC-6 ───────────────────────────────
   if (idea.authorId === actorId) {
     return { success: false, error: 'SELF_REVIEW_FORBIDDEN' }
+  }
+
+  // ── V2: Multi-stage review pipeline ──────────────────────────────────────
+  if (env.FEATURE_MULTI_STAGE_REVIEW_ENABLED === 'true') {
+    const v2Result = await claimStage(ideaId)
+    if ('error' in v2Result) {
+      // Map V2 error codes to StartReviewResult error strings for backwards compat
+      const codeMap: Record<string, string> = {
+        UNAUTHENTICATED: 'UNAUTHENTICATED',
+        FORBIDDEN: 'FORBIDDEN_ROLE',
+        IDEA_NOT_FOUND: 'IDEA_NOT_FOUND',
+        SELF_REVIEW_FORBIDDEN: 'SELF_REVIEW_FORBIDDEN',
+        ALREADY_UNDER_REVIEW: 'ALREADY_UNDER_REVIEW',
+        ALREADY_CLAIMED: 'ALREADY_UNDER_REVIEW',
+        FEATURE_DISABLED: 'INTERNAL_ERROR',
+      }
+      return { success: false, error: codeMap[v2Result.code] ?? v2Result.code }
+    }
+    return { success: true, reviewId: v2Result.stageProgressId }
   }
 
   // ── Transaction: concurrency guard + state change + audit ─────────────────
