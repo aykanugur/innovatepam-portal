@@ -22,6 +22,7 @@ export const SaveDraftSchema = z.object({
     .optional(),
   category: z.string().nullable().optional(),
   visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
+  isAnonymous: z.boolean().optional(),
   /** JSON object of dynamic field values (EPIC-V2-01 Smart Forms) */
   dynamicFields: z.record(z.string(), z.unknown()).nullable().optional(),
   /** Staged attachment URLs to associate with this draft (EPIC-V2-02) */

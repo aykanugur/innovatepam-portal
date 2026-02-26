@@ -66,6 +66,7 @@ export default async function StageReviewPage({ params }: PageProps) {
           status: true,
           category: true,
           authorId: true, // EPIC-V2-05: needed for blind review self-view exemption
+          isAnonymous: true,
           author: { select: { displayName: true } },
         },
       },
@@ -105,6 +106,13 @@ export default async function StageReviewPage({ params }: PageProps) {
     ideaStatus: idea.status,
     featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
   })
+
+  let finalAuthorName = maskedAuthorName
+  if (idea.isAnonymous) {
+    // Stage reviewers see anonymous as anonymous
+    finalAuthorName =
+      idea.authorId === session.user.id ? `${maskedAuthorName} (Anonymous)` : 'Anonymous'
+  }
 
   return (
     <div
@@ -146,7 +154,7 @@ export default async function StageReviewPage({ params }: PageProps) {
             </span>
           </div>
           <p className="text-xs" style={{ color: '#8888A8' }}>
-            Submitted by {maskedAuthorName} · Category: {idea.category}
+            Submitted by {finalAuthorName} · Category: {idea.category}
           </p>
           <p className="text-xs" style={{ color: '#555577' }}>
             Stage {stage.order}: {stage.name}
@@ -166,6 +174,7 @@ export default async function StageReviewPage({ params }: PageProps) {
           stageProgressId={progress.id}
           isDecisionStage={stage.isDecisionStage}
           stageName={stage.name}
+          scoringEnabled={env.FEATURE_SCORING_ENABLED === 'true'}
           onSuccess={
             // Client-side redirect handled by router.push; we pass a noop here
             // since this is a Server Component passing to a Client Component.

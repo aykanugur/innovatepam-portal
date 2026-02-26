@@ -127,6 +127,12 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
   })
 
+  // Override with Anonymous if submitted anonymously
+  let finalAuthorName = maskedAuthorName
+  if (idea.isAnonymous) {
+    finalAuthorName = idea.authorId === userId ? `${maskedAuthorName} (Anonymous)` : 'Anonymous'
+  }
+
   // EPIC-V2-06: prepare score data for ScoreSection
   const scoreData = idea.score
     ? {
@@ -154,7 +160,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         category={idea.category ?? ''}
         status={idea.status}
         visibility={idea.visibility}
-        authorName={maskedAuthorName}
+        authorName={finalAuthorName}
         authorId={idea.authorId}
         createdAt={idea.createdAt.toISOString()}
         attachmentUrl={idea.attachmentPath}

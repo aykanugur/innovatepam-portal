@@ -66,6 +66,7 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
     description: formData.get('description'),
     category: formData.get('category'),
     visibility: formData.get('visibility'),
+    isAnonymous: formData.get('isAnonymous') === 'true',
   })
 
   if (!parsed.success) {
@@ -189,6 +190,7 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
           description: parsed.data.description,
           category: parsed.data.category,
           visibility: parsed.data.visibility,
+          isAnonymous: parsed.data.isAnonymous,
           status: 'SUBMITTED',
           authorId: userId,
           attachmentPath,

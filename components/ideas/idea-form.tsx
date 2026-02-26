@@ -29,6 +29,7 @@ interface FormState {
   description: string
   category: CategorySlug | ''
   visibility: 'PUBLIC' | 'PRIVATE'
+  isAnonymous: boolean
 }
 
 interface FormErrors {
@@ -113,6 +114,7 @@ export default function IdeaForm({
     description: initialValues?.description ?? '',
     category: initialValues?.category ?? '',
     visibility: initialValues?.visibility ?? 'PUBLIC',
+    isAnonymous: initialValues?.isAnonymous ?? false,
   })
   const [errors, setErrors] = useState<FormErrors>({})
   // T010 — Smart Forms: controlled dynamic field values (FR-004)
@@ -139,6 +141,7 @@ export default function IdeaForm({
             description: form.description,
             category: form.category,
             visibility: form.visibility,
+            isAnonymous: form.isAnonymous,
             timestamp: Date.now(),
           })
         )
@@ -167,6 +170,11 @@ export default function IdeaForm({
       setDynamicValues({})
       setDynamicErrors({})
     }
+  }
+
+  function handleCheckboxChange(e: ChangeEvent<HTMLInputElement>) {
+    const { name, checked } = e.target
+    setForm((prev) => ({ ...prev, [name]: checked }))
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -233,6 +241,7 @@ export default function IdeaForm({
         description: form.description || null,
         category: form.category || null,
         visibility: form.visibility,
+        isAnonymous: form.isAnonymous,
         dynamicFields: Object.keys(dynamicValues).length > 0 ? dynamicValues : null,
         attachmentUrls: multiAttachmentEnabled ? attachmentBlobUrls : undefined,
       })
@@ -280,6 +289,7 @@ export default function IdeaForm({
           description: parsed.data.description,
           category: parsed.data.category,
           visibility: parsed.data.visibility,
+          isAnonymous: parsed.data.isAnonymous,
         })
         if ('error' in result) {
           if ('fieldErrors' in result && result.fieldErrors) {
@@ -311,6 +321,7 @@ export default function IdeaForm({
       formData.append('description', parsed.data.description)
       formData.append('category', parsed.data.category)
       formData.append('visibility', parsed.data.visibility)
+      formData.append('isAnonymous', parsed.data.isAnonymous ? 'true' : 'false')
       // T010 — serialize dynamic fields if flag is on and values exist (FR-002)
       if (templates && Object.keys(dynamicValues).length > 0) {
         formData.append('dynamicFields', JSON.stringify(dynamicValues))
@@ -545,6 +556,29 @@ export default function IdeaForm({
           </p>
         ) : null}
       </fieldset>
+
+      {/* Anonymous Submission */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="isAnonymous"
+          name="isAnonymous"
+          checked={form.isAnonymous}
+          onChange={handleCheckboxChange}
+          className="h-4 w-4 rounded"
+          style={{ accentColor: '#00c8ff' }}
+        />
+        <label
+          htmlFor="isAnonymous"
+          className="text-sm cursor-pointer select-none"
+          style={{ color: '#F0F0FA' }}
+        >
+          Submit anonymously
+        </label>
+        <span className="text-xs" style={{ color: '#60607A' }}>
+          (hide your name from admins and other users)
+        </span>
+      </div>
 
       {/* File attachment (T013) — rendered only when V1 flag is on AND multi-attach is OFF */}
       {attachmentEnabled && !multiAttachmentEnabled && (

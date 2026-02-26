@@ -97,6 +97,9 @@ model Idea {
   // T004 — Smart Forms: nullable JSON map of dynamic field values (FR-002)
   // null for V1 ideas or when FEATURE_SMART_FORMS_ENABLED=false
   dynamicFields  Json?
+  
+  // Anonymous submission option
+  isAnonymous    Boolean   @default(false)
 
   // T001 — Draft Management lifecycle columns
   // null for non-draft ideas; set to now()+90d on draft creation; reset on each Save Draft

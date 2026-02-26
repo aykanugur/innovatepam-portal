@@ -27,7 +27,15 @@ type SubmitDraftResult =
 
 export async function submitDraft(
   draftId: string,
-  formData: FormData | { title: string; description: string; category: string; visibility?: string }
+  formData:
+    | FormData
+    | {
+        title: string
+        description: string
+        category: string
+        visibility?: string
+        isAnonymous?: boolean
+      }
 ): Promise<SubmitDraftResult> {
   // ── 1. Auth ──────────────────────────────────────────────────────────────
   const session = await auth()
@@ -68,6 +76,7 @@ export async function submitDraft(
           description: formData.get('description'),
           category: formData.get('category'),
           visibility: formData.get('visibility'),
+          isAnonymous: formData.get('isAnonymous') === 'true',
         }
       : formData
 
@@ -92,6 +101,7 @@ export async function submitDraft(
         description: parsed.data.description,
         category: parsed.data.category,
         visibility: parsed.data.visibility ?? 'PUBLIC',
+        isAnonymous: parsed.data.isAnonymous ?? false,
         status: nextStatus,
         draftExpiresAt: null, // clear expiry on submission
       },

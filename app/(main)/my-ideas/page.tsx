@@ -195,7 +195,11 @@ export default async function MyIdeasPage() {
                   <IdeaCard
                     id={idea.id}
                     title={idea.title ?? 'Untitled'}
-                    authorName={idea.author.displayName}
+                    authorName={
+                      idea.isAnonymous
+                        ? `${idea.author.displayName} (Anonymous)`
+                        : idea.author.displayName
+                    }
                     category={idea.category ?? ''}
                     status={idea.status}
                     createdAt={idea.createdAt.toISOString()}

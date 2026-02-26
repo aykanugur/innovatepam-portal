@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     category: idea.category,
     status: idea.status,
     visibility: idea.visibility,
-    authorName: idea.author.displayName,
+    authorName: idea.isAnonymous ? 'Anonymous' : idea.author.displayName,
     createdAt: idea.createdAt.toISOString(),
   }))
 
@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
       description: formData.get('description'),
       category: formData.get('category'),
       visibility: formData.get('visibility'),
+      isAnonymous: formData.get('isAnonymous') === 'true',
     }
     const fileEntry = formData.get('attachment')
     if (fileEntry instanceof File && fileEntry.size > 0) {
@@ -182,6 +183,7 @@ export async function POST(request: NextRequest) {
       description: parsed.data.description,
       category: parsed.data.category,
       visibility: parsed.data.visibility,
+      isAnonymous: parsed.data.isAnonymous,
       status: 'SUBMITTED',
       authorId: userId,
       attachmentPath,
@@ -211,7 +213,7 @@ export async function POST(request: NextRequest) {
         category: idea.category,
         status: idea.status,
         visibility: idea.visibility,
-        authorName: idea.author.displayName,
+        authorName: idea.isAnonymous ? 'Anonymous' : idea.author.displayName,
         authorId: idea.authorId,
         description: idea.description,
         attachmentUrl: idea.attachmentPath,

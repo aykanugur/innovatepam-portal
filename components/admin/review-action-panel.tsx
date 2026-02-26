@@ -15,6 +15,8 @@ import { useState, useTransition } from 'react'
 import { startReviewAction } from '@/lib/actions/start-review'
 import { finalizeReviewAction } from '@/lib/actions/finalize-review'
 import { AttachmentsTable, type AttachmentRow } from '@/components/ideas/attachments-table'
+import ClaimStageButton from '@/components/admin/claim-stage-button'
+import Link from 'next/link'
 import type { IdeaStatus } from '@/lib/generated/prisma/client'
 
 interface ReviewActionPanelProps {
@@ -31,6 +33,8 @@ interface ReviewActionPanelProps {
   attachments?: AttachmentRow[]
   /** T016 — must be true (FEATURE_MULTI_ATTACHMENT_ENABLED) for attachment section to render */
   multiAttachmentEnabled?: boolean
+  multiStageEnabled?: boolean
+  activeStageProgressId?: string
 }
 
 export default function ReviewActionPanel({
@@ -38,6 +42,8 @@ export default function ReviewActionPanel({
   currentUser,
   attachments,
   multiAttachmentEnabled,
+  multiStageEnabled,
+  activeStageProgressId,
 }: ReviewActionPanelProps) {
   const [comment, setComment] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -76,31 +82,35 @@ export default function ReviewActionPanel({
             </p>
           )}
 
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => {
-              setError(null)
-              startTransition(async () => {
-                const formData = new FormData()
-                formData.set('ideaId', idea.id)
-                const result = await startReviewAction(undefined, formData)
-                if (!result.success) {
-                  setError(
-                    result.error === 'SELF_REVIEW_FORBIDDEN'
-                      ? 'You cannot review your own idea.'
-                      : result.error === 'ALREADY_UNDER_REVIEW'
-                        ? 'Another reviewer has already started this review.'
-                        : `Error: ${result.error ?? 'Unknown error'}`
-                  )
-                }
-              })
-            }}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
-          >
-            {isPending ? 'Starting…' : 'Start Review'}
-          </button>
+          {multiStageEnabled ? (
+            <ClaimStageButton ideaId={idea.id} />
+          ) : (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => {
+                setError(null)
+                startTransition(async () => {
+                  const formData = new FormData()
+                  formData.set('ideaId', idea.id)
+                  const result = await startReviewAction(undefined, formData)
+                  if (!result.success) {
+                    setError(
+                      result.error === 'SELF_REVIEW_FORBIDDEN'
+                        ? 'You cannot review your own idea.'
+                        : result.error === 'ALREADY_UNDER_REVIEW'
+                          ? 'Another reviewer has already started this review.'
+                          : `Error: ${result.error ?? 'Unknown error'}`
+                    )
+                  }
+                })
+              }}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
+            >
+              {isPending ? 'Starting…' : 'Start Review'}
+            </button>
+          )}
         </div>
 
         {showAttachments && (
@@ -137,8 +147,44 @@ export default function ReviewActionPanel({
     )
   }
 
-  // ── UNDER_REVIEW: show comment textarea + Accept / Reject ─────────────────
+  // ── UNDER_REVIEW: show V1 Accept/Reject OR V2 Continue link ─────────────────
   if (idea.status === 'UNDER_REVIEW' && !isSelfReview) {
+    if (multiStageEnabled) {
+      return (
+        <>
+          <div
+            className="rounded-xl p-6 space-y-4"
+            style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <h2 className="text-sm font-semibold" style={{ color: '#F0F0FA' }}>
+              Multi-Stage Review Active
+            </h2>
+            <p className="text-sm" style={{ color: '#8888A8' }}>
+              This idea is currently being reviewed in the pipeline.
+            </p>
+            {activeStageProgressId ? (
+              <Link
+                href={`/admin/review/${idea.id}/stage/${activeStageProgressId}`}
+                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #10b981, #047857)' }}
+              >
+                Continue Review →
+              </Link>
+            ) : (
+              <p className="text-sm" style={{ color: '#fbbf24' }}>
+                No active stage found. Checking pipeline status...
+              </p>
+            )}
+          </div>
+          {showAttachments && (
+            <div className="mt-4">
+              <AttachmentsTable attachments={attachments!} canDelete />
+            </div>
+          )}
+        </>
+      )
+    }
+
     const handleDecision = (decision: 'ACCEPTED' | 'REJECTED') => {
       setError(null)
       startTransition(async () => {

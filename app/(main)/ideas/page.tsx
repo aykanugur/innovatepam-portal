@@ -73,7 +73,7 @@ export default async function IdeasPage({ searchParams }: PageProps) {
     category: idea.category ?? '',
     status: idea.status,
     visibility: idea.visibility,
-    authorName: idea.author.displayName,
+    authorName: idea.isAnonymous ? 'Anonymous' : idea.author.displayName,
     createdAt: idea.createdAt.toISOString(),
   }))
 

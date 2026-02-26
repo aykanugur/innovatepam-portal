@@ -16,6 +16,7 @@ export interface PendingSummary {
   id: string
   title: string
   category: string
+  status: string
   createdAt: string | Date
   author: { displayName: string | null }
 }
@@ -127,7 +128,17 @@ export default function PendingQueue({ ideas, multiStageEnabled = false }: Pendi
                 </td>
                 <td className="px-4 py-3 text-right">
                   {multiStageEnabled ? (
-                    <ClaimStageButton ideaId={idea.id} />
+                    idea.status === 'UNDER_REVIEW' ? (
+                      <Link
+                        href={`/admin/review/${idea.id}`}
+                        className="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
+                        style={{ background: 'linear-gradient(135deg, #10b981, #047857)' }}
+                      >
+                        Continue
+                      </Link>
+                    ) : (
+                      <ClaimStageButton ideaId={idea.id} />
+                    )
                   ) : (
                     <Link
                       href={`/admin/review/${idea.id}`}

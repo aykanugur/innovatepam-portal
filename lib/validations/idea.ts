@@ -28,6 +28,7 @@ export const CreateIdeaSchema = z.object({
     .max(2000, 'Description must be 2,000 characters or fewer'),
   category: categorySlugSchema,
   visibility: z.enum(['PUBLIC', 'PRIVATE']),
+  isAnonymous: z.boolean().optional().default(false),
 })
 
 export type CreateIdeaInput = z.infer<typeof CreateIdeaSchema>

@@ -103,6 +103,8 @@ export default async function AdminReviewPage({ params }: PageProps) {
       })
     : []
 
+  const activeStage = stageProgress.find((sp) => sp.startedAt !== null && sp.completedAt === null)
+
   const currentUser = {
     id: session.user.id,
     role: dbUser.role,
@@ -123,6 +125,13 @@ export default async function AdminReviewPage({ params }: PageProps) {
     ideaStatus: idea.status,
     featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
   })
+
+  let finalAuthorName = maskedAuthorName
+  if (idea.isAnonymous) {
+    // Only the author themselves would see their name with 'Anonymous', but admins should just see 'Anonymous' if it's blind or anonymous.
+    // Usually admin sees 'Anonymous'.
+    finalAuthorName = 'Anonymous'
+  }
 
   return (
     <main className="min-h-screen p-8" style={{ background: '#060608' }}>
@@ -149,7 +158,7 @@ export default async function AdminReviewPage({ params }: PageProps) {
                 {idea.title ?? 'Untitled'}
               </h1>
               <p className="text-sm" style={{ color: '#8888A8' }}>
-                By {maskedAuthorName} ·{' '}
+                By {finalAuthorName} ·{' '}
                 {idea.category
                   ? (CATEGORY_LABEL[idea.category as CategorySlug] ?? idea.category)
                   : 'No category'}{' '}
@@ -221,6 +230,8 @@ export default async function AdminReviewPage({ params }: PageProps) {
               })
             )}
             multiAttachmentEnabled={multiAttachmentEnabled}
+            multiStageEnabled={multiStageEnabled}
+            activeStageProgressId={activeStage?.id}
           />
         )}
 

@@ -91,6 +91,7 @@ export async function saveDraft(input: SaveDraftInput): Promise<SaveDraftResult>
           description: data.description ?? null,
           category: data.category ?? null,
           visibility: data.visibility ?? 'PUBLIC',
+          isAnonymous: data.isAnonymous ?? false,
           ...(data.dynamicFields != null
             ? { dynamicFields: data.dynamicFields as DynamicFields }
             : {}),
@@ -139,6 +140,7 @@ export async function saveDraft(input: SaveDraftInput): Promise<SaveDraftResult>
           description: data.description ?? null,
           category: data.category ?? null,
           ...(data.visibility !== undefined ? { visibility: data.visibility } : {}),
+          ...(data.isAnonymous !== undefined ? { isAnonymous: data.isAnonymous } : {}),
           ...(data.dynamicFields != null
             ? { dynamicFields: data.dynamicFields as DynamicFields }
             : {}),

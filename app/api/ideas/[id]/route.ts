@@ -61,6 +61,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
   })
 
+  let finalAuthorName = maskedAuthorName
+  if (idea.isAnonymous) {
+    finalAuthorName = idea.authorId === userId ? `${maskedAuthorName} (Anonymous)` : 'Anonymous'
+  }
+
   return NextResponse.json({
     data: {
       id: idea.id,
@@ -69,7 +74,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       category: idea.category,
       status: idea.status,
       visibility: idea.visibility,
-      authorName: maskedAuthorName,
+      authorName: finalAuthorName,
       authorId: idea.authorId,
       attachmentUrl: idea.attachmentPath,
       createdAt: idea.createdAt.toISOString(),

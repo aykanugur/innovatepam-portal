@@ -77,6 +77,7 @@ export async function completeStage(
     return { error: 'Not authenticated.', code: 'UNAUTHENTICATED' }
   }
   const actorId = session.user.id
+  const actorRole = session.user.role
 
   try {
     // ── Load progress row ──────────────────────────────────────────────────
@@ -89,7 +90,7 @@ export async function completeStage(
     if (!progress) return { error: 'Stage progress record not found.', code: 'PROGRESS_NOT_FOUND' }
 
     // ── Owner guard ────────────────────────────────────────────────────────
-    if (progress.reviewerId !== actorId) {
+    if (progress.reviewerId && progress.reviewerId !== actorId && actorRole !== 'SUPERADMIN') {
       return {
         error: 'Only the reviewer who claimed this stage may complete it.',
         code: 'FORBIDDEN',
@@ -137,10 +138,10 @@ export async function completeStage(
     const allStages = stage.pipeline.stages
 
     await db.$transaction(async (tx) => {
-      // Mark this stage complete
+      // Mark this stage complete and assign reviewerId if it wasn't set
       await tx.ideaStageProgress.update({
         where: { id: stageProgressId },
-        data: { outcome, comment, completedAt: now },
+        data: { outcome, comment, completedAt: now, reviewerId: actorId },
       })
 
       // Write STAGE_COMPLETED audit

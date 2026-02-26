@@ -102,6 +102,12 @@ export async function resolveEscalation(
 
     await db.$transaction(async (tx) => {
       if (action === 'PASS') {
+        // Mark the escalated stage as PASS so it leaves the Escalation Queue
+        await tx.ideaStageProgress.update({
+          where: { id: stageProgressId },
+          data: { outcome: 'PASS' },
+        })
+
         const nextStage = allStages.find((s) => s.order === stage.order + 1)
 
         if (nextStage) {

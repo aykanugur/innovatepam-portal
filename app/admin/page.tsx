@@ -47,7 +47,9 @@ export default async function AdminPage() {
       _count: { _all: true },
     }),
     db.idea.findMany({
-      where: { status: 'SUBMITTED' },
+      where: {
+        status: multiStageEnabled ? { in: ['SUBMITTED', 'UNDER_REVIEW'] } : 'SUBMITTED',
+      },
       orderBy: { createdAt: 'asc' }, // oldest-first (FR-012)
       include: {
         author: { select: { displayName: true } },
@@ -174,8 +176,9 @@ export default async function AdminPage() {
             id: idea.id,
             title: idea.title ?? 'Untitled',
             category: idea.category ?? '',
+            status: idea.status,
             createdAt: idea.createdAt.toISOString(),
-            author: { displayName: idea.author.displayName },
+            author: { displayName: idea.isAnonymous ? 'Anonymous' : idea.author.displayName },
           }))}
           multiStageEnabled={multiStageEnabled}
         />
