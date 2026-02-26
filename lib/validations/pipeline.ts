@@ -103,6 +103,8 @@ export const CreatePipelineSchema = z.object({
     errorMap: () => ({ message: 'Invalid category slug.' }),
   }),
   isDefault: z.boolean().default(false),
+  // EPIC-V2-05 — Blind Review: SUPERADMIN-only field
+  blindReview: z.boolean().default(false),
   stages: z
     .array(StageInputSchema)
     .min(2, 'A pipeline must have at least 2 stages.')

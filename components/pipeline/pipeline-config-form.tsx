@@ -163,6 +163,8 @@ export default function PipelineConfigForm({
           categorySlug,
           name: `${categoryLabel} Pipeline`,
           isDefault: false,
+          // EPIC-V2-05: SUPERADMIN-only blind review toggle
+          blindReview: userRole === 'SUPERADMIN' ? localBlindReview : false,
           stages: stagesPayload,
         })
       }

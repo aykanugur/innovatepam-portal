@@ -97,6 +97,7 @@ describe('createPipeline()', () => {
       categorySlug: 'cost-reduction',
       name: 'Cost Reduction Pipeline',
       isDefault: false,
+      blindReview: false,
       stages: VALID_STAGES,
     })
 
@@ -113,6 +114,7 @@ describe('createPipeline()', () => {
       categorySlug: 'cost-reduction',
       name: 'Duplicate',
       isDefault: false,
+      blindReview: false,
       stages: VALID_STAGES,
     })
 
@@ -127,6 +129,7 @@ describe('createPipeline()', () => {
       categorySlug: 'cost-reduction',
       name: 'Bad Pipeline',
       isDefault: false,
+      blindReview: false,
       stages: [
         { name: 'Stage 1', order: 1, isDecisionStage: false },
         { name: 'Stage 2', order: 2, isDecisionStage: false },
@@ -144,6 +147,7 @@ describe('createPipeline()', () => {
       categorySlug: 'cost-reduction',
       name: 'Bad Pipeline',
       isDefault: false,
+      blindReview: false,
       stages: [
         { name: 'Stage 1', order: 1, isDecisionStage: true },
         { name: 'Stage 2', order: 2, isDecisionStage: true },
@@ -160,6 +164,7 @@ describe('createPipeline()', () => {
       categorySlug: 'cost-reduction',
       name: 'Pipeline',
       isDefault: false,
+      blindReview: false,
       stages: VALID_STAGES,
     })
 

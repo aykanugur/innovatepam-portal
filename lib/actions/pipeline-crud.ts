@@ -64,7 +64,7 @@ export async function createPipeline(
     return { error: parsed.error.errors[0].message, code: 'VALIDATION_ERROR' }
   }
 
-  const { name, categorySlug, isDefault, stages } = parsed.data
+  const { name, categorySlug, isDefault, blindReview, stages } = parsed.data
 
   try {
     // Guard: no existing pipeline for this category
@@ -81,6 +81,8 @@ export async function createPipeline(
         name,
         categorySlug,
         isDefault,
+        // EPIC-V2-05: SUPERADMIN-only blind review setting
+        blindReview,
         stages: {
           create: stages.map((s) => ({
             name: s.name,
