@@ -2,9 +2,12 @@
  * app/admin/analytics/page.tsx — T040
  *
  * Analytics Dashboard — US-014
+ * EPIC-V2-06 — Scoring Analytics Widgets (US-044)
+ *
  * - Feature-flag guard: returns 404 when FEATURE_ANALYTICS_ENABLED !== 'true' (FR-021)
  * - Role guard: SUPERADMIN only (FR-022)
  * - Three parallel Prisma queries for chart data
+ * - EPIC-V2-06: three additional scoring widgets when FEATURE_SCORING_ENABLED=true
  */
 
 import { redirect } from 'next/navigation'
@@ -14,7 +17,15 @@ import { db } from '@/lib/db'
 import { IdeasByCategoryChart } from '@/components/analytics/ideas-by-category-chart'
 import { SubmissionTrendChart } from '@/components/analytics/submission-trend-chart'
 import { TopContributorsTable } from '@/components/analytics/top-contributors-table'
+import { AvgScoreChart } from '@/components/analytics/avg-score-chart'
+import { ScoreDistributionChart } from '@/components/analytics/score-distribution-chart'
+import { TopScoredIdeasTable } from '@/components/analytics/top-scored-ideas-table'
 import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
+import {
+  getAvgScoreByCategory,
+  getScoreDistribution,
+  getTopScoredIdeas,
+} from '@/lib/actions/scoring-analytics'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +50,9 @@ export default async function AnalyticsPage() {
   if (!dbUser || dbUser.role !== 'SUPERADMIN') {
     redirect('/forbidden')
   }
+
+  const scoringEnabled = process.env.FEATURE_SCORING_ENABLED === 'true'
+  const blindReviewEnabled = process.env.FEATURE_BLIND_REVIEW_ENABLED === 'true'
 
   // ── Three parallel data queries ──────────────────────────────────────────
 
@@ -69,6 +83,15 @@ export default async function AnalyticsPage() {
       take: 5,
     }),
   ])
+
+  // ── EPIC-V2-06: scoring analytics queries (parallel) ─────────────────────
+  const [avgScoreData, scoreDistData, topScoredData] = scoringEnabled
+    ? await Promise.all([
+        getAvgScoreByCategory(),
+        getScoreDistribution(),
+        getTopScoredIdeas(session.user.id, 'SUPERADMIN', blindReviewEnabled),
+      ])
+    : [[], [], []]
 
   // ── Shape data for charts ────────────────────────────────────────────────
 
@@ -155,6 +178,46 @@ export default async function AnalyticsPage() {
             <TopContributorsTable data={topContributorsData} />
           </div>
         </div>
+
+        {/* EPIC-V2-06: Scoring Insights section */}
+        {scoringEnabled && (
+          <section id="scoring-analytics" className="mt-10">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold" style={{ color: '#F0F0FA' }}>
+                Scoring Insights
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: '#8888A8' }}>
+                Review scores and evaluation trends.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Avg score by category */}
+              <div
+                className="rounded-xl p-6"
+                style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <AvgScoreChart data={avgScoreData} />
+              </div>
+
+              {/* Score distribution histogram */}
+              <div
+                className="rounded-xl p-6"
+                style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <ScoreDistributionChart data={scoreDistData} />
+              </div>
+
+              {/* Top scored ideas (full width) */}
+              <div
+                className="rounded-xl p-6 lg:col-span-2"
+                style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <TopScoredIdeasTable data={topScoredData} />
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   )

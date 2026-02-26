@@ -4,22 +4,25 @@
  * lib/actions/complete-stage.ts
  *
  * EPIC-V2-04 — Multi-Stage Review Pipeline
- * Server Action: completeStage(stageProgressId, outcome, comment)
+ * EPIC-V2-06 — Scoring System (score + criteria on decision stage)
+ *
+ * Server Action: completeStage(stageProgressId, outcome, comment, score?, criteria?)
  *
  * The reviewer who claimed the stage records their outcome.
  * PASS → activates the next stage.
  * ESCALATE → surfaces in escalation queue, no next stage activation.
  * ACCEPTED / REJECTED → finalizes the idea (decision stage only).
  *
- * T021 (PASS path), T026 (ACCEPTED/REJECTED path), T027 (outcome cross-validation),
- * T029 (ESCALATE path)
+ * When FEATURE_SCORING_ENABLED=true and stage is a decision stage,
+ * a score (1–5) is required and an IdeaScore record is atomically
+ * persisted with the decision.
  */
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { env } from '@/lib/env'
-import { CompleteStageSchema } from '@/lib/validations/pipeline'
+import { CompleteStageWithScoreSchema } from '@/lib/validations/pipeline'
 import { StageOutcome } from '@/lib/generated/prisma/client'
 
 type CompleteStageErrorCode =
@@ -31,6 +34,8 @@ type CompleteStageErrorCode =
   | 'ALREADY_COMPLETED'
   | 'STAGE_NOT_STARTED'
   | 'INVALID_OUTCOME'
+  | 'SCORE_REQUIRED'
+  | 'SCORE_CONFLICT'
   | 'INTERNAL_ERROR'
 
 interface CompleteStageSuccess {
@@ -45,7 +50,9 @@ interface CompleteStageError {
 export async function completeStage(
   stageProgressId: string,
   outcome: StageOutcome,
-  comment: string
+  comment: string,
+  score?: number,
+  criteria?: string[]
 ): Promise<CompleteStageSuccess | CompleteStageError> {
   // ── Feature flag ───────────────────────────────────────────────────────────
   if (env.FEATURE_MULTI_STAGE_REVIEW_ENABLED !== 'true') {
@@ -53,7 +60,13 @@ export async function completeStage(
   }
 
   // ── Input validation ───────────────────────────────────────────────────────
-  const parsed = CompleteStageSchema.safeParse({ stageProgressId, outcome, comment })
+  const parsed = CompleteStageWithScoreSchema.safeParse({
+    stageProgressId,
+    outcome,
+    comment,
+    score,
+    criteria,
+  })
   if (!parsed.success) {
     return { error: parsed.error.errors[0].message, code: 'VALIDATION_ERROR' }
   }
@@ -106,6 +119,15 @@ export async function completeStage(
       return {
         error: `Only ACCEPTED or REJECTED are valid on the decision stage (received ${outcome}).`,
         code: 'INVALID_OUTCOME',
+      }
+    }
+
+    // ── EPIC-V2-06: score guard on decision stage ──────────────────────────
+    const scoringEnabled = env.FEATURE_SCORING_ENABLED === 'true'
+    if (scoringEnabled && isDecisionStage && (score == null || score < 1 || score > 5)) {
+      return {
+        error: 'A score (1–5) is required to finalise the decision.',
+        code: 'SCORE_REQUIRED',
       }
     }
 
@@ -185,15 +207,48 @@ export async function completeStage(
         })
       }
 
+      // ── EPIC-V2-06: Record IdeaScore on decision stage ────────────────
+      if (scoringEnabled && isDecisionStage && score != null) {
+        await tx.ideaScore.create({
+          data: {
+            ideaId,
+            reviewerId: actorId,
+            score,
+            criteria: criteria ?? [],
+          },
+        })
+        await tx.auditLog.create({
+          data: {
+            actorId,
+            action: 'IDEA_SCORED',
+            targetId: ideaId,
+            metadata: { score, criteria: criteria ?? [], ideaId },
+          },
+        })
+      }
+
       // ── ESCALATE: no further stage activation; audit already written ──
     })
 
     revalidatePath('/admin/review')
     revalidatePath(`/admin/review/${ideaId}`)
     revalidatePath(`/ideas/${ideaId}`)
+    revalidatePath('/admin/analytics')
 
     return { success: true }
-  } catch {
+  } catch (err: unknown) {
+    // EPIC-V2-06: handle duplicate IdeaScore race condition (P2002)
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      'code' in err &&
+      (err as { code: string }).code === 'P2002'
+    ) {
+      return {
+        error: 'A score has already been recorded for this idea.',
+        code: 'SCORE_CONFLICT',
+      }
+    }
     return { error: 'Failed to complete stage.', code: 'INTERNAL_ERROR' }
   }
 }

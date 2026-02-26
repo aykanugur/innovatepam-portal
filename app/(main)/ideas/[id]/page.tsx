@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { env } from '@/lib/env'
 import { maskAuthorIfBlind } from '@/lib/blind-review'
 import IdeaDetail from '@/components/ideas/idea-detail'
+import ScoreSection from '@/components/ideas/score-section'
 import { AttachmentsTable, type AttachmentRow } from '@/components/ideas/attachments-table'
 import StageProgressStepper from '@/components/ideas/stage-progress-stepper'
 import type { FieldDefinition } from '@/types/field-template'
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 /**
  * T022 — Idea detail page (US-010).
+ * EPIC-V2-06 — score section (US-043).
  * Server component: fetches idea detail, enforces visibility rules,
  * and passes current session user info to IdeaDetail for delete affordance logic.
  */
@@ -45,6 +47,10 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       },
       // T012 — fetch attachments ordered by upload date (US-023, FR-001)
       attachments: { orderBy: { createdAt: 'asc' } },
+      // EPIC-V2-06: fetch score relation (one per idea)
+      score: {
+        include: { reviewer: { select: { displayName: true } } },
+      },
     },
   })
 
@@ -62,6 +68,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
   const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
   const multiStageEnabled = process.env.FEATURE_MULTI_STAGE_REVIEW_ENABLED === 'true'
+  const scoringEnabled = process.env.FEATURE_SCORING_ENABLED === 'true'
 
   // T015 — fetch field template for the idea's category when flag is on (FR-010)
   let fieldTemplates: FieldDefinition[] | null = null
@@ -103,6 +110,13 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     where: { categorySlug: idea.category ?? '' },
     select: { blindReview: true },
   })
+  const isBlindMode =
+    env.FEATURE_BLIND_REVIEW_ENABLED === 'true' &&
+    (blindReviewPipeline?.blindReview ?? false) &&
+    idea.status === 'UNDER_REVIEW' &&
+    role === 'ADMIN' &&
+    userId !== idea.authorId
+
   const maskedAuthorName = maskAuthorIfBlind({
     authorId: idea.authorId,
     authorDisplayName: idea.author.displayName,
@@ -112,6 +126,15 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     ideaStatus: idea.status,
     featureFlagEnabled: env.FEATURE_BLIND_REVIEW_ENABLED === 'true',
   })
+
+  // EPIC-V2-06: prepare score data for ScoreSection
+  const scoreData = idea.score
+    ? {
+        score: idea.score.score,
+        criteria: idea.score.criteria,
+        reviewerName: idea.score.reviewer?.displayName ?? undefined,
+      }
+    : null
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -153,6 +176,16 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         fieldTemplates={fieldTemplates}
         smartFormsEnabled={smartFormsEnabled}
       />
+
+      {/* EPIC-V2-06: Evaluation Score section (US-043) */}
+      <div className="mt-6">
+        <ScoreSection
+          score={scoreData}
+          ideaStatus={idea.status}
+          scoringEnabled={scoringEnabled}
+          blindMode={isBlindMode}
+        />
+      </div>
 
       {/* T036 — Stage progress stepper (US5) */}
       {stageProgress.length > 0 && (

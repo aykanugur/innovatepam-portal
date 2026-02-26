@@ -38,6 +38,8 @@ export const envSchema = z.object({
   FEATURE_MULTI_STAGE_REVIEW_ENABLED: z.string().default('false'),
   // EPIC-V2-05 — Blind Review: masks author identity from ADMINs during active review when true
   FEATURE_BLIND_REVIEW_ENABLED: z.string().default('false'),
+  // EPIC-V2-06 — Scoring System: enables 1–5 star rating on decision stage review panel
+  FEATURE_SCORING_ENABLED: z.string().default('false'),
 })
 
 export type Env = z.infer<typeof envSchema>

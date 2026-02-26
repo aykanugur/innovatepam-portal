@@ -49,6 +49,8 @@ enum AuditAction {
   STAGE_COMPLETED       // admin (or SUPERADMIN escalation resolver) completed a stage
   PIPELINE_CREATED      // SUPERADMIN created a new custom pipeline
   PIPELINE_UPDATED      // SUPERADMIN edited an existing pipeline
+  // EPIC-V2-06 — Scoring System
+  IDEA_SCORED           // admin recorded a 1–5 score on the decision stage
 }
 
 /// EPIC-V2-04 — outcome recorded on a completed IdeaStageProgress row.
@@ -79,6 +81,8 @@ model User {
   attachments IdeaAttachment[]  @relation("UserAttachments")
   // EPIC-V2-04: stages claimed/reviewed by this admin
   stageProgress IdeaStageProgress[] @relation("UserStageReviews")
+  // EPIC-V2-06: scores recorded by this admin
+  scores        IdeaScore[]         @relation("UserScores")
 }
 
 model Idea {
@@ -110,6 +114,8 @@ model Idea {
   attachments IdeaAttachment[] @relation("IdeaAttachments")
   // EPIC-V2-04: stage progress rows (one per stage, created atomically at claim time)
   stageProgress IdeaStageProgress[] @relation("IdeaStageProgress")
+  // EPIC-V2-06: optional 1–5 score recorded at decision stage (one per idea)
+  score       IdeaScore?      @relation("IdeaScore")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -248,4 +254,23 @@ model IdeaStageProgress {
   @@index([ideaId])
   @@index([stageId])
   @@index([outcome]) // supports efficient escalation queue query
+}
+
+// ─── EPIC-V2-06: Scoring System ───────────────────────────────────────────────
+
+/// Stores the 1–5 numeric score and optional criteria tags recorded by the
+/// decision-stage reviewer. One score per idea; enforced by @@unique([ideaId]).
+/// DB check constraint `IdeaScore_score_range` (applied in raw migration SQL)
+/// enforces score >= 1 AND score <= 5 as a secondary safety net beyond Zod.
+model IdeaScore {
+  id         String   @id @default(cuid())
+  ideaId     String   @unique
+  idea       Idea     @relation("IdeaScore", fields: [ideaId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User     @relation("UserScores", fields: [reviewerId], references: [id])
+  score      Int
+  criteria   String[]
+  recordedAt DateTime @default(now())
+
+  @@index([score])
 }

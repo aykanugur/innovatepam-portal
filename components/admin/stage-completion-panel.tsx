@@ -4,11 +4,14 @@
  * components/admin/stage-completion-panel.tsx
  *
  * T022 — US2 (Admin Claims Stage + PASS)
+ * EPIC-V2-06 — Scoring System (star rating + criteria tags on decision stage)
  *
  * Client Component: stage outcome form.
  * - Outcome radio group:
  *     non-decision stage → PASS | ESCALATE
  *     decision stage     → ACCEPTED | REJECTED
+ * - EPIC-V2-06: Star rating (required on decision stage when scoring enabled)
+ * - EPIC-V2-06: Criteria tag multi-select (optional)
  * - Comment textarea (min 10, max 2000)
  * - Submit button → calls completeStage() Server Action
  * - Error / loading states
@@ -16,6 +19,9 @@
 
 import { useState, useTransition } from 'react'
 import { completeStage } from '@/lib/actions/complete-stage'
+import { StarRating } from '@/components/ui/star-rating'
+import CriteriaTagSelect from '@/components/admin/criteria-tag-select'
+import type { ScoringCriterion } from '@/constants/scoring-criteria'
 
 type NonDecisionOutcome = 'PASS' | 'ESCALATE'
 type DecisionOutcome = 'ACCEPTED' | 'REJECTED'
@@ -25,6 +31,8 @@ interface StageCompletionPanelProps {
   stageProgressId: string
   isDecisionStage: boolean
   stageName: string
+  /** Whether FEATURE_SCORING_ENABLED=true (passed from server) */
+  scoringEnabled?: boolean
   /** Callback on successful submission */
   onSuccess?: () => void
 }
@@ -33,6 +41,7 @@ export default function StageCompletionPanel({
   stageProgressId,
   isDecisionStage,
   stageName,
+  scoringEnabled = false,
   onSuccess,
 }: StageCompletionPanelProps) {
   const outcomes: AnyOutcome[] = isDecisionStage ? ['ACCEPTED', 'REJECTED'] : ['PASS', 'ESCALATE']
@@ -53,18 +62,39 @@ export default function StageCompletionPanel({
 
   const [outcome, setOutcome] = useState<AnyOutcome>(outcomes[0])
   const [comment, setComment] = useState('')
+  const [score, setScore] = useState(0)
+  const [criteria, setCriteria] = useState<ScoringCriterion[]>([])
+  const [scoreError, setScoreError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const commentTooShort = comment.trim().length < 10
   const commentTooLong = comment.trim().length > 2000
-  const canSubmit = !commentTooShort && !commentTooLong && !isPending
+
+  // Score is required on decision stage when scoring is enabled
+  const showScoring = isDecisionStage && scoringEnabled
+  const scoreValid = !showScoring || score > 0
+
+  const canSubmit = !commentTooShort && !commentTooLong && !isPending && scoreValid
 
   function handleSubmit() {
+    // Re-check score before submitting
+    if (showScoring && score === 0) {
+      setScoreError('A score (1–5) is required to finalise the decision.')
+      return
+    }
+    setScoreError(null)
+
     if (!canSubmit) return
     setError(null)
     startTransition(async () => {
-      const result = await completeStage(stageProgressId, outcome, comment.trim())
+      const result = await completeStage(
+        stageProgressId,
+        outcome,
+        comment.trim(),
+        showScoring ? score : undefined,
+        showScoring ? criteria : undefined
+      )
       if ('error' in result) {
         setError(result.error)
       } else {
@@ -82,6 +112,23 @@ export default function StageCompletionPanel({
       <h2 className="text-base font-semibold" style={{ color: '#F0F0FA' }}>
         Complete Stage: {stageName}
       </h2>
+
+      {/* EPIC-V2-06: Star Rating (decision stage only, when scoring enabled) */}
+      {showScoring && (
+        <StarRating
+          value={score}
+          onChange={(v) => {
+            setScore(v)
+            setScoreError(null)
+          }}
+          label="Rate this idea"
+          required
+          error={scoreError}
+        />
+      )}
+
+      {/* EPIC-V2-06: Criteria Tags (decision stage only, when scoring enabled) */}
+      {showScoring && <CriteriaTagSelect value={criteria} onChange={setCriteria} />}
 
       {/* Outcome radio group */}
       <fieldset>

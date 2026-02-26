@@ -79,6 +79,25 @@ export const CompleteStageSchema = z.object({
 
 export type CompleteStageInput = z.infer<typeof CompleteStageSchema>
 
+// ─── EPIC-V2-06: completeStage with scoring ──────────────────────────────────
+
+import { SCORING_CRITERIA } from '@/constants/scoring-criteria'
+
+const scoringCriteriaTuple = SCORING_CRITERIA as readonly [string, ...string[]]
+
+export const CompleteStageWithScoreSchema = z.object({
+  stageProgressId: z.string().cuid('Invalid stage progress ID'),
+  outcome: z.nativeEnum(StageOutcome),
+  comment: z
+    .string()
+    .min(10, 'A comment is required (minimum 10 characters).')
+    .max(2000, 'Comment must be 2000 characters or fewer.'),
+  score: z.number().int().min(1).max(5).optional(),
+  criteria: z.array(z.enum(scoringCriteriaTuple)).max(5).optional(),
+})
+
+export type CompleteStageWithScoreInput = z.infer<typeof CompleteStageWithScoreSchema>
+
 // ─── resolveEscalation ────────────────────────────────────────────────────────
 
 export const ResolveEscalationSchema = z.object({
