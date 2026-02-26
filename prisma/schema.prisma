@@ -39,6 +39,7 @@ enum AuditAction {
   IDEA_REVIEW_STARTED   // admin opened a review
   IDEA_REVIEWED         // admin finalized Accept/Reject
   IDEA_REVIEW_ABANDONED // SUPERADMIN reset UNDER_REVIEW → SUBMITTED
+  ATTACHMENT_DELETED    // US-025: admin removed an attachment from an idea
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -53,9 +54,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  ideas     Idea[]       @relation("UserIdeas")
-  reviews   IdeaReview[] @relation("UserReviews")
-  auditLogs AuditLog[]   @relation("UserAuditLogs")
+  ideas       Idea[]            @relation("UserIdeas")
+  reviews     IdeaReview[]      @relation("UserReviews")
+  auditLogs   AuditLog[]        @relation("UserAuditLogs")
+  // US-022: uploaded attachments (relation name "UserAttachments")
+  attachments IdeaAttachment[]  @relation("UserAttachments")
 }
 
 model Idea {
@@ -73,7 +76,9 @@ model Idea {
   authorId String
   author   User       @relation("UserIdeas", fields: [authorId], references: [id])
 
-  review IdeaReview? @relation("IdeaReview")
+  review      IdeaReview?     @relation("IdeaReview")
+  // US-022: normalized attachment records (cascade-deletes with idea, FR-002)
+  attachments IdeaAttachment[] @relation("IdeaAttachments")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -128,4 +133,24 @@ model VerificationToken {
   expires DateTime
 
   @@index([email])
+}
+
+// US-021–025: normalized, per-file attachment record (FR-001)
+// Replaces the legacy Idea.attachmentPath String? (soft-deprecated, not written by new code)
+model IdeaAttachment {
+  id           String   @id @default(cuid())
+  ideaId       String
+  idea         Idea     @relation("IdeaAttachments", fields: [ideaId], references: [id], onDelete: Cascade)
+  blobUrl      String
+  fileName     String
+  /// File size in bytes. 0 indicates an unknown size (V1-migrated rows).
+  fileSize     Int
+  mimeType     String
+  uploadedById String
+  uploadedBy   User     @relation("UserAttachments", fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  /// Prevents duplicate rows and enables idempotent upsert in V1 migration script
+  @@unique([ideaId, blobUrl])
+  @@index([ideaId])
 }

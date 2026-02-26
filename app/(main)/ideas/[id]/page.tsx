@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import IdeaDetail from '@/components/ideas/idea-detail'
+import { AttachmentsTable, type AttachmentRow } from '@/components/ideas/attachments-table'
 import type { FieldDefinition } from '@/types/field-template'
 import type { Metadata } from 'next'
 
@@ -39,6 +40,8 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       review: {
         include: { reviewer: { select: { displayName: true } } },
       },
+      // T012 — fetch attachments ordered by upload date (US-023, FR-001)
+      attachments: { orderBy: { createdAt: 'asc' } },
     },
   })
 
@@ -53,6 +56,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   if (!canAccess) notFound()
 
   const attachmentEnabled = process.env.FEATURE_FILE_ATTACHMENT_ENABLED === 'true'
+  const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
   const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
 
   // T015 — fetch field template for the idea's category when flag is on (FR-010)
@@ -116,6 +120,24 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         fieldTemplates={fieldTemplates}
         smartFormsEnabled={smartFormsEnabled}
       />
+
+      {/* T012 — Multi-attachments list (US-023) */}
+      {multiAttachmentEnabled && idea.attachments.length > 0 && (
+        <div className="mt-6">
+          <AttachmentsTable
+            attachments={idea.attachments.map(
+              (a): AttachmentRow => ({
+                id: a.id,
+                fileName: a.fileName,
+                fileSize: a.fileSize,
+                mimeType: a.mimeType,
+                createdAt: a.createdAt,
+              })
+            )}
+            canDelete={false}
+          />
+        </div>
+      )}
     </div>
   )
 }

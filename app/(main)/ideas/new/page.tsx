@@ -23,6 +23,7 @@ export default async function SubmitIdeaPage() {
   if (!session) redirect('/login?callbackUrl=/ideas/new')
 
   const attachmentEnabled = process.env.FEATURE_FILE_ATTACHMENT_ENABLED === 'true'
+  const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
 
   // T011 — Smart Forms: fetch all 5 category templates when flag on (FR-003, FR-010)
   // When flag off: skip DB round-trip entirely (spec FR-010 clarification).
@@ -65,7 +66,11 @@ export default async function SubmitIdeaPage() {
         className="rounded-2xl p-6"
         style={{ background: '#1A1A2A', border: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <IdeaForm attachmentEnabled={attachmentEnabled} templates={templates} />
+        <IdeaForm
+          attachmentEnabled={attachmentEnabled}
+          templates={templates}
+          multiAttachmentEnabled={multiAttachmentEnabled}
+        />
       </div>
     </div>
   )

@@ -11,12 +11,13 @@
  * File attachment: PDF/PNG/JPG/DOCX/MD; max 5 MB — FR-005/FR-006/FR-008.
  */
 
-import { useState, useRef, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useRef, useCallback, type FormEvent, type ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { CATEGORIES, type CategorySlug } from '@/constants/categories'
 import { CreateIdeaSchema } from '@/lib/validations/idea'
 import { createIdeaAction } from '@/lib/actions/create-idea'
 import DynamicFieldSection from '@/components/ideas/dynamic-field-section'
+import { DropZoneUploader } from '@/components/ideas/drop-zone-uploader'
 import type { FieldDefinition } from '@/types/field-template'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,9 +56,18 @@ interface IdeaFormProps {
    * null when FEATURE_SMART_FORMS_ENABLED=false (FR-010).
    */
   templates?: Record<CategorySlug, FieldDefinition[]> | null
+  /**
+   * T010 — Multi-Attachments: when true, renders the DropZoneUploader in place
+   * of the V1 single-file picker (FEATURE_MULTI_ATTACHMENT_ENABLED).
+   */
+  multiAttachmentEnabled?: boolean
 }
 
-export default function IdeaForm({ attachmentEnabled, templates }: IdeaFormProps) {
+export default function IdeaForm({
+  attachmentEnabled,
+  templates,
+  multiAttachmentEnabled,
+}: IdeaFormProps) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -72,7 +82,13 @@ export default function IdeaForm({ attachmentEnabled, templates }: IdeaFormProps
   const [dynamicValues, setDynamicValues] = useState<Record<string, string | number>>({})
   const [dynamicErrors, setDynamicErrors] = useState<Record<string, string>>({})
   const [file, setFile] = useState<File | null>(null)
+  // T010 — Multi-attachments: blobUrls from DropZoneUploader
+  const [attachmentBlobUrls, setAttachmentBlobUrls] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+
+  const handleUploadsChange = useCallback((urls: string[]) => {
+    setAttachmentBlobUrls(urls)
+  }, [])
 
   // ─── Field helpers ────────────────────────────────────────────────────────
 
@@ -174,6 +190,10 @@ export default function IdeaForm({ attachmentEnabled, templates }: IdeaFormProps
       }
       if (file) {
         formData.append('attachment', file)
+      }
+      // T010 — Multi-attachments: pass blobUrls collected from DropZoneUploader
+      if (multiAttachmentEnabled && attachmentBlobUrls.length > 0) {
+        formData.append('attachmentUrls', JSON.stringify(attachmentBlobUrls))
       }
 
       const result = await createIdeaAction(formData)
@@ -374,8 +394,8 @@ export default function IdeaForm({ attachmentEnabled, templates }: IdeaFormProps
         ) : null}
       </fieldset>
 
-      {/* File attachment (T013) — rendered only when flag is on */}
-      {attachmentEnabled && (
+      {/* File attachment (T013) — rendered only when V1 flag is on AND multi-attach is OFF */}
+      {attachmentEnabled && !multiAttachmentEnabled && (
         <div className="space-y-1.5">
           <label
             htmlFor="attachment"
@@ -478,6 +498,19 @@ export default function IdeaForm({ attachmentEnabled, templates }: IdeaFormProps
               {errors.attachment}
             </p>
           ) : null}
+        </div>
+      )}
+
+      {/* Multi-attachment drop zone (T010) — shown only when feature flag on */}
+      {multiAttachmentEnabled && (
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium" style={{ color: '#C0C0D8' }}>
+            Attachments{' '}
+            <span className="font-normal" style={{ color: '#60607A' }}>
+              (optional)
+            </span>
+          </label>
+          <DropZoneUploader onUploadsChange={handleUploadsChange} disabled={submitting} />
         </div>
       )}
 
