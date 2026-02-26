@@ -30,6 +30,10 @@ export const envSchema = z.object({
     .transform((v) => (v === '' ? undefined : v)),
   // T001 (US-022) — Multi-Media Attachments: gates upload/download/delete (FR-019)
   FEATURE_MULTI_ATTACHMENT_ENABLED: z.string().default('false'),
+  // T001 — Draft Management: gates draft creation and editing (FR-014)
+  FEATURE_DRAFT_ENABLED: z.string().default('false'),
+  // T001 — Draft Management: secret for cron endpoint auth (FR-010, FR-017)
+  CRON_SECRET: z.string().min(32, 'CRON_SECRET must be at least 32 characters'),
 })
 
 export type Env = z.infer<typeof envSchema>

@@ -29,7 +29,9 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   const idea = await db.idea.findUnique({ where: { id }, select: { title: true } })
-  return { title: idea ? `Review: ${idea.title} — InnovatEPAM` : 'Review — InnovatEPAM' }
+  return {
+    title: idea ? `Review: ${idea.title ?? 'Untitled'} — InnovatEPAM` : 'Review — InnovatEPAM',
+  }
 }
 
 export default async function AdminReviewPage({ params }: PageProps) {
@@ -65,6 +67,9 @@ export default async function AdminReviewPage({ params }: PageProps) {
 
   if (!idea) notFound()
 
+  // T029 — Defence-in-depth: DRAFT ideas must never be accessible in admin review
+  if (idea.status === 'DRAFT') notFound()
+
   const isSuperAdmin = dbUser.role === 'SUPERADMIN'
   const isDecided = idea.status === 'ACCEPTED' || idea.status === 'REJECTED'
   const isUnderReview = idea.status === 'UNDER_REVIEW'
@@ -74,9 +79,11 @@ export default async function AdminReviewPage({ params }: PageProps) {
   const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
   let fieldTemplates: FieldDefinition[] | null = null
   if (smartFormsEnabled) {
-    const template = await db.categoryFieldTemplate.findUnique({
-      where: { category: idea.category },
-    })
+    const template = idea.category
+      ? await db.categoryFieldTemplate.findUnique({
+          where: { category: idea.category },
+        })
+      : null
     fieldTemplates = template ? (template.fields as unknown as FieldDefinition[]) : null
   }
 
@@ -95,7 +102,7 @@ export default async function AdminReviewPage({ params }: PageProps) {
           </Link>
           <span>/</span>
           <span className="font-medium truncate max-w-xs" style={{ color: '#F0F0FA' }}>
-            {idea.title}
+            {idea.title ?? 'Untitled'}
           </span>
         </nav>
 
@@ -107,11 +114,14 @@ export default async function AdminReviewPage({ params }: PageProps) {
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <h1 className="text-xl font-semibold" style={{ color: '#F0F0FA' }}>
-                {idea.title}
+                {idea.title ?? 'Untitled'}
               </h1>
               <p className="text-sm" style={{ color: '#8888A8' }}>
                 By {idea.author.displayName} ·{' '}
-                {CATEGORY_LABEL[idea.category as CategorySlug] ?? idea.category} ·{' '}
+                {idea.category
+                  ? (CATEGORY_LABEL[idea.category as CategorySlug] ?? idea.category)
+                  : 'No category'}{' '}
+                ·{' '}
                 {new Date(idea.createdAt).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'short',
@@ -129,7 +139,7 @@ export default async function AdminReviewPage({ params }: PageProps) {
           </div>
 
           <p className="text-sm whitespace-pre-wrap" style={{ color: '#D0D0E8' }}>
-            {idea.description}
+            {idea.description ?? ''}
           </p>
         </div>
 

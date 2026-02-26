@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { env } from '@/lib/env'
 import IdeaForm from '@/components/ideas/idea-form'
 import type { Metadata } from 'next'
 import type { CategorySlug } from '@/constants/categories'
@@ -20,7 +21,9 @@ export const metadata: Metadata = {
  */
 export default async function SubmitIdeaPage() {
   const session = await auth()
-  if (!session) redirect('/login?callbackUrl=/ideas/new')
+  if (!session?.user?.id) redirect('/login?callbackUrl=/ideas/new')
+
+  const userId = session.user.id
 
   const attachmentEnabled = process.env.FEATURE_FILE_ATTACHMENT_ENABLED === 'true'
   const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
@@ -28,6 +31,7 @@ export default async function SubmitIdeaPage() {
   // T011 — Smart Forms: fetch all 5 category templates when flag on (FR-003, FR-010)
   // When flag off: skip DB round-trip entirely (spec FR-010 clarification).
   const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+  const draftEnabled = env.FEATURE_DRAFT_ENABLED === 'true'
   let templates: Record<CategorySlug, FieldDefinition[]> | null = null
 
   if (smartFormsEnabled) {
@@ -37,6 +41,27 @@ export default async function SubmitIdeaPage() {
       for (const row of rows) {
         templates[row.category as CategorySlug] = row.fields as unknown as FieldDefinition[]
       }
+    }
+  }
+
+  // T019 — Draft limit: fetch active draft count for Save Draft button (FR-003)
+  // Guard with try/catch in case the DB migration for DRAFT status hasn't been
+  // applied yet (T003) — fails gracefully by disabling draft UI (FR-010).
+  let activeDraftCount = 0
+  let draftFeatureActive = draftEnabled
+  if (draftEnabled) {
+    try {
+      activeDraftCount = await db.idea.count({
+        where: {
+          authorId: userId,
+          status: 'DRAFT',
+          isExpiredDraft: false,
+          draftExpiresAt: { gt: new Date() },
+        },
+      })
+    } catch {
+      // DB migration not yet applied — disable draft UI gracefully
+      draftFeatureActive = false
     }
   }
 
@@ -70,6 +95,9 @@ export default async function SubmitIdeaPage() {
           attachmentEnabled={attachmentEnabled}
           templates={templates}
           multiAttachmentEnabled={multiAttachmentEnabled}
+          draftEnabled={draftFeatureActive}
+          draftCount={activeDraftCount}
+          userId={userId}
         />
       </div>
     </div>

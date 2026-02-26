@@ -267,9 +267,9 @@ export function DropZoneUploader({ onUploadsChange, disabled, className }: DropZ
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         aria-label={`Attach files. Drag and drop or press Enter to browse. Accepted formats: ${acceptedExts}. Max ${MAX_FILE_COUNT} files, ${formatFileSize(MAX_FILE_SIZE_BYTES)} each.`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
+        onDragOver={onDragOver as unknown as React.DragEventHandler<HTMLLabelElement>}
+        onDragLeave={onDragLeave as unknown as React.DragEventHandler<HTMLLabelElement>}
+        onDrop={onDrop as unknown as React.DragEventHandler<HTMLLabelElement>}
         onKeyDown={onKeyDown}
         className={cn(
           'flex flex-col items-center justify-center gap-2 rounded-xl p-6 text-center transition-colors cursor-pointer select-none',

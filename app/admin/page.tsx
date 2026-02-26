@@ -170,8 +170,8 @@ export default async function AdminPage() {
         <PendingQueue
           ideas={pendingIdeas.map((idea) => ({
             id: idea.id,
-            title: idea.title,
-            category: idea.category,
+            title: idea.title ?? 'Untitled',
+            category: idea.category ?? '',
             createdAt: idea.createdAt.toISOString(),
             author: { displayName: idea.author.displayName },
           }))}

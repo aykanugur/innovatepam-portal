@@ -8,6 +8,11 @@ import type { IdeaStatus } from '@/lib/generated/prisma/client'
 
 export const STATUS_BADGE_CLASSES: Record<IdeaStatus, { bg: string; text: string; label: string }> =
   {
+    DRAFT: {
+      bg: 'bg-white/[0.06]',
+      text: 'text-slate-400',
+      label: 'Draft',
+    },
     SUBMITTED: {
       bg: 'bg-white/[0.08]',
       text: 'text-slate-300',

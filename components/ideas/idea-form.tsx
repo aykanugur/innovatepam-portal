@@ -11,11 +11,13 @@
  * File attachment: PDF/PNG/JPG/DOCX/MD; max 5 MB — FR-005/FR-006/FR-008.
  */
 
-import { useState, useRef, useCallback, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useRef, useCallback, useEffect, type FormEvent, type ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { CATEGORIES, type CategorySlug } from '@/constants/categories'
 import { CreateIdeaSchema } from '@/lib/validations/idea'
 import { createIdeaAction } from '@/lib/actions/create-idea'
+import { saveDraft } from '@/lib/actions/save-draft'
+import { submitDraft } from '@/lib/actions/submit-draft'
 import DynamicFieldSection from '@/components/ideas/dynamic-field-section'
 import { DropZoneUploader } from '@/components/ideas/drop-zone-uploader'
 import type { FieldDefinition } from '@/types/field-template'
@@ -48,6 +50,11 @@ const ALLOWED_TYPES = [
 ]
 const MAX_FILE_BYTES = 5 * 1024 * 1024 // 5 MB
 
+interface DraftFeedback {
+  type: 'success' | 'error'
+  message: string
+}
+
 interface IdeaFormProps {
   /** When true, renders the optional file attachment field (T013) */
   attachmentEnabled: boolean
@@ -61,21 +68,51 @@ interface IdeaFormProps {
    * of the V1 single-file picker (FEATURE_MULTI_ATTACHMENT_ENABLED).
    */
   multiAttachmentEnabled?: boolean
+  /**
+   * T012 — Draft Management: pre-existing draft id when editing a saved draft.
+   * undefined = new idea form.
+   */
+  draftId?: string
+  /**
+   * T012 — Draft Management: current user id for localStorage keying.
+   */
+  userId?: string
+  /**
+   * T012 — Draft Management: when true, renders the "Save Draft" button.
+   * Derived from FEATURE_DRAFT_ENABLED env var at the server.
+   */
+  draftEnabled?: boolean
+  /**
+   * T014 — Pre-populate form fields when editing an existing draft.
+   */
+  initialValues?: Partial<FormState>
+  /**
+   * T020 — Draft Limit: number of active drafts the user currently has.
+   * When >= 10, "Save Draft" is disabled with explanatory tooltip.
+   */
+  draftCount?: number
 }
 
 export default function IdeaForm({
   attachmentEnabled,
   templates,
   multiAttachmentEnabled,
+  draftId,
+  userId,
+  draftEnabled = false,
+  draftCount = 0,
+  initialValues,
 }: IdeaFormProps) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
+  // T012/T013 — tracks current draft id (may update after first save)
+  const currentDraftIdRef = useRef<string | undefined>(draftId)
 
   const [form, setForm] = useState<FormState>({
-    title: '',
-    description: '',
-    category: '',
-    visibility: 'PUBLIC',
+    title: initialValues?.title ?? '',
+    description: initialValues?.description ?? '',
+    category: initialValues?.category ?? '',
+    visibility: initialValues?.visibility ?? 'PUBLIC',
   })
   const [errors, setErrors] = useState<FormErrors>({})
   // T010 — Smart Forms: controlled dynamic field values (FR-004)
@@ -85,6 +122,32 @@ export default function IdeaForm({
   // T010 — Multi-attachments: blobUrls from DropZoneUploader
   const [attachmentBlobUrls, setAttachmentBlobUrls] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+  // T012 — Save Draft state
+  const [savingDraft, setSavingDraft] = useState(false)
+  const [draftFeedback, setDraftFeedback] = useState<DraftFeedback | null>(null)
+
+  // T013 — 60-second localStorage auto-save (only after a draft exists server-side)
+  useEffect(() => {
+    if (!draftEnabled || !userId || !currentDraftIdRef.current) return
+    const key = `draft_autosave_${userId}_${currentDraftIdRef.current}`
+    const interval = setInterval(() => {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            title: form.title,
+            description: form.description,
+            category: form.category,
+            visibility: form.visibility,
+            timestamp: Date.now(),
+          })
+        )
+      } catch {
+        // quota exceeded or private browsing — silently ignore
+      }
+    }, 60_000)
+    return () => clearInterval(interval)
+  }, [draftEnabled, userId, form])
 
   const handleUploadsChange = useCallback((urls: string[]) => {
     setAttachmentBlobUrls(urls)
@@ -157,6 +220,37 @@ export default function IdeaForm({
     }
   }
 
+  // ─── Save Draft ───────────────────────────────────────────────────────────
+
+  async function handleSaveDraft() {
+    if (savingDraft || draftCount >= 10) return
+    setSavingDraft(true)
+    setDraftFeedback(null)
+    try {
+      const result = await saveDraft({
+        id: currentDraftIdRef.current,
+        title: form.title || null,
+        description: form.description || null,
+        category: form.category || null,
+        visibility: form.visibility,
+        dynamicFields: Object.keys(dynamicValues).length > 0 ? dynamicValues : null,
+        attachmentUrls: multiAttachmentEnabled ? attachmentBlobUrls : undefined,
+      })
+      if ('error' in result) {
+        setDraftFeedback({ type: 'error', message: result.error })
+      } else {
+        currentDraftIdRef.current = result.draftId
+        setDraftFeedback({ type: 'success', message: 'Draft saved successfully.' })
+        // Auto-dismiss success after 4 s
+        setTimeout(() => setDraftFeedback(null), 4000)
+      }
+    } catch {
+      setDraftFeedback({ type: 'error', message: 'Failed to save draft. Please try again.' })
+    } finally {
+      setSavingDraft(false)
+    }
+  }
+
   // ─── Submit ───────────────────────────────────────────────────────────────
 
   async function handleSubmit(e: FormEvent) {
@@ -179,6 +273,39 @@ export default function IdeaForm({
     setErrors({})
 
     try {
+      // T018 — when editing a draft, submit via submitDraft() instead of createIdeaAction()
+      if (currentDraftIdRef.current) {
+        const result = await submitDraft(currentDraftIdRef.current, {
+          title: parsed.data.title,
+          description: parsed.data.description,
+          category: parsed.data.category,
+          visibility: parsed.data.visibility,
+        })
+        if ('error' in result) {
+          if ('fieldErrors' in result && result.fieldErrors) {
+            const fe = result.fieldErrors as Record<string, string[]>
+            setErrors({
+              title: fe.title?.[0],
+              description: fe.description?.[0],
+              category: fe.category?.[0],
+              general: result.error,
+            })
+          } else {
+            setErrors({ general: result.error })
+          }
+          setSubmitting(false)
+          return
+        }
+        // On success: clear localStorage auto-save key then redirect
+        if (userId) {
+          try {
+            localStorage.removeItem(`draft_autosave_${userId}_${currentDraftIdRef.current}`)
+          } catch {}
+        }
+        router.push(`/ideas/${result.ideaId}`)
+        return
+      }
+
       const formData = new FormData()
       formData.append('title', parsed.data.title)
       formData.append('description', parsed.data.description)
@@ -228,6 +355,31 @@ export default function IdeaForm({
           }}
         >
           {errors.general}
+        </div>
+      )}
+
+      {/* T012 — Draft save feedback banner */}
+      {draftFeedback && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm"
+          style={{
+            background:
+              draftFeedback.type === 'success' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+            color: draftFeedback.type === 'success' ? '#4ade80' : '#F87171',
+            border: `1px solid ${draftFeedback.type === 'success' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
+          }}
+        >
+          <span>{draftFeedback.message}</span>
+          <button
+            type="button"
+            onClick={() => setDraftFeedback(null)}
+            aria-label="Dismiss"
+            className="ml-3 text-xs opacity-70 hover:opacity-100"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -514,19 +666,53 @@ export default function IdeaForm({
         </div>
       )}
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-full py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
-        style={{
-          background: submitting ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
-          opacity: submitting ? 0.7 : 1,
-          boxShadow: '0 2px 16px rgba(0,200,255,0.2)',
-        }}
-      >
-        {submitting ? 'Submitting…' : 'Submit Idea'}
-      </button>
+      {/* Submit + Save Draft action row */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex-1 rounded-full py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
+          style={{
+            background: submitting ? '#0070f3' : 'linear-gradient(135deg, #00c8ff, #0070f3)',
+            opacity: submitting ? 0.7 : 1,
+            boxShadow: '0 2px 16px rgba(0,200,255,0.2)',
+          }}
+        >
+          {submitting ? 'Submitting…' : 'Submit Idea'}
+        </button>
+
+        {/* T012 — Save Draft button: only rendered when feature flag is on */}
+        {draftEnabled && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={savingDraft || submitting || draftCount >= 10}
+              aria-disabled={draftCount >= 10}
+              title={
+                draftCount >= 10
+                  ? 'You have reached the maximum of 10 drafts. Please submit or delete a draft to continue.'
+                  : undefined
+              }
+              className="w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: savingDraft || draftCount >= 10 ? '#60607A' : '#C0C0D8',
+                opacity: draftCount >= 10 ? 0.5 : 1,
+              }}
+            >
+              {savingDraft ? 'Saving…' : 'Save Draft'}
+            </button>
+            {/* T020 — Limit tooltip message below button */}
+            {draftCount >= 10 && (
+              <p className="mt-1 text-center text-xs" style={{ color: '#F87171' }}>
+                10-draft limit reached
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </form>
   )
 }

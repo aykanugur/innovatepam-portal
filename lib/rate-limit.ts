@@ -137,3 +137,42 @@ function createIdeaSubmitRateLimiter(): RateLimiterLike {
 }
 
 export const ideaSubmitRateLimiter = createIdeaSubmitRateLimiter()
+
+// ─── Draft save rate limiter ──────────────────────────────────────────────────
+/**
+ * T001 — Draft Management: draft save rate limiter.
+ * 30 saves per userId per 15-minute sliding window — FR-016.
+ * Separate from the idea-submission limiter to allow relaxed cadence.
+ * Key = authenticated user's cuid (from session.userId).
+ * In-memory fallback only (no Redis in current env — single-instance alpha).
+ */
+function createDraftSaveLimiter(): RateLimiterLike {
+  const store = new Map<string, { count: number; reset: number }>()
+  const WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+  const LIMIT = 30
+
+  return {
+    async limit(identifier: string): Promise<RateLimitResult> {
+      const now = Date.now()
+      const record = store.get(identifier)
+
+      if (!record || record.reset < now) {
+        store.set(identifier, { count: 1, reset: now + WINDOW_MS })
+        return { success: true, remaining: LIMIT - 1, reset: now + WINDOW_MS }
+      }
+
+      record.count++
+      if (record.count > LIMIT) {
+        return { success: false, remaining: 0, reset: record.reset }
+      }
+
+      return {
+        success: true,
+        remaining: LIMIT - record.count,
+        reset: record.reset,
+      }
+    },
+  }
+}
+
+export const draftSaveLimiter = createDraftSaveLimiter()

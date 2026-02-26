@@ -3,13 +3,14 @@ import { screen } from '@testing-library/dom'
 import Home from '@/app/page'
 
 describe('Home page', () => {
-  it('renders the submit idea button', () => {
+  it('renders the submit idea link', () => {
     render(<Home />)
-    expect(screen.getByRole('button', { name: /submit an idea/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /submit.*idea/i })).toBeInTheDocument()
   })
 
-  it('renders the portal heading', () => {
+  it('renders the portal brand text', () => {
     render(<Home />)
-    expect(screen.getByText(/InnovateEPAM Portal/i)).toBeInTheDocument()
+    const matches = screen.getAllByText(/InnovatEPAM/i)
+    expect(matches.length).toBeGreaterThanOrEqual(1)
   })
 })

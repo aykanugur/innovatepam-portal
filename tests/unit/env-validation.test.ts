@@ -29,6 +29,7 @@ describe('lib/env.ts — envSchema validation', () => {
       AUTH_SECRET: 'a-secret-that-is-at-least-32-chars-long!!',
       NEXTAUTH_URL: 'http://localhost:3000',
       SUPERADMIN_EMAIL: 'admin@epam.com',
+      CRON_SECRET: 'a-cron-secret-that-is-at-least-32-chars!!',
     }
 
     expect(() => envSchema.parse(validEnv)).not.toThrow()
@@ -41,6 +42,7 @@ describe('lib/env.ts — envSchema validation', () => {
       AUTH_SECRET: 'a-secret-that-is-at-least-32-chars-long!!',
       NEXTAUTH_URL: 'http://localhost:3000',
       SUPERADMIN_EMAIL: 'admin@epam.com',
+      CRON_SECRET: 'a-cron-secret-that-is-at-least-32-chars!!',
     })
     expect(result.PORTAL_ENABLED).toBe('true')
   })

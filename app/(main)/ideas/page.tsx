@@ -69,8 +69,8 @@ export default async function IdeasPage({ searchParams }: PageProps) {
 
   const ideas = rawIdeas.map((idea) => ({
     id: idea.id,
-    title: idea.title,
-    category: idea.category,
+    title: idea.title ?? 'Untitled',
+    category: idea.category ?? '',
     status: idea.status,
     visibility: idea.visibility,
     authorName: idea.author.displayName,

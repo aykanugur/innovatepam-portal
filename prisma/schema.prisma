@@ -17,6 +17,7 @@ enum Role {
 }
 
 enum IdeaStatus {
+  DRAFT         // T001 — Draft Management: saved but not submitted; author-only visibility
   SUBMITTED     // initial state on creation
   UNDER_REVIEW  // admin has opened the review
   ACCEPTED      // admin decision: accepted
@@ -40,6 +41,9 @@ enum AuditAction {
   IDEA_REVIEWED         // admin finalized Accept/Reject
   IDEA_REVIEW_ABANDONED // SUPERADMIN reset UNDER_REVIEW → SUBMITTED
   ATTACHMENT_DELETED    // US-025: admin removed an attachment from an idea
+  DRAFT_SAVED           // T001 — Draft Management: user created or updated a draft
+  DRAFT_DELETED         // T001 — Draft Management: user permanently deleted a draft
+  DRAFT_SUBMITTED       // T001 — Draft Management: draft transitioned to SUBMITTED
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -63,15 +67,24 @@ model User {
 
 model Idea {
   id             String         @id @default(cuid())
-  title          String
-  description    String
-  category       String
+  // T001 — Draft Management: nullable to allow saving empty drafts (FR-001)
+  title          String?
+  description    String?
+  category       String?
   status         IdeaStatus     @default(SUBMITTED)
   visibility     IdeaVisibility @default(PUBLIC)
   attachmentPath String?
   // T004 — Smart Forms: nullable JSON map of dynamic field values (FR-002)
   // null for V1 ideas or when FEATURE_SMART_FORMS_ENABLED=false
   dynamicFields  Json?
+
+  // T001 — Draft Management lifecycle columns
+  // null for non-draft ideas; set to now()+90d on draft creation; reset on each Save Draft
+  draftExpiresAt DateTime?
+  // Soft-delete flag — set to true by cron or lazy check when draftExpiresAt < now()
+  isExpiredDraft Boolean   @default(false)
+  // When isExpiredDraft was set to true; used to calculate 30-day hard-delete threshold
+  softDeletedAt  DateTime?
 
   authorId String
   author   User       @relation("UserIdeas", fields: [authorId], references: [id])
@@ -82,6 +95,9 @@ model Idea {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([authorId, status])             // T001: accelerates per-user draft queries
+  @@index([isExpiredDraft, draftExpiresAt]) // T001: accelerates cron soft-delete query
 }
 
 // T004 — Smart Forms: stores the field template for each idea category (FR-001)

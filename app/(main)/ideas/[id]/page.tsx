@@ -62,9 +62,11 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   // T015 — fetch field template for the idea's category when flag is on (FR-010)
   let fieldTemplates: FieldDefinition[] | null = null
   if (smartFormsEnabled) {
-    const template = await db.categoryFieldTemplate.findUnique({
-      where: { category: idea.category },
-    })
+    const template = idea.category
+      ? await db.categoryFieldTemplate.findUnique({
+          where: { category: idea.category },
+        })
+      : null
     fieldTemplates = template ? (template.fields as unknown as FieldDefinition[]) : null
   }
 
@@ -93,9 +95,9 @@ export default async function IdeaDetailPage({ params }: PageProps) {
 
       <IdeaDetail
         id={idea.id}
-        title={idea.title}
-        description={idea.description}
-        category={idea.category}
+        title={idea.title ?? 'Untitled'}
+        description={idea.description ?? ''}
+        category={idea.category ?? ''}
         status={idea.status}
         visibility={idea.visibility}
         authorName={idea.author.displayName}

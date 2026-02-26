@@ -5,6 +5,7 @@
  * NO Prisma imports — pure logic only (US-016, data-model.md §3).
  *
  * Valid transitions:
+ *   DRAFT        + SUBMIT        (any authenticated author)  → SUBMITTED
  *   SUBMITTED    + START_REVIEW  (ADMIN | SUPERADMIN) → UNDER_REVIEW
  *   UNDER_REVIEW + ACCEPT        (ADMIN | SUPERADMIN) → ACCEPTED
  *   UNDER_REVIEW + REJECT        (ADMIN | SUPERADMIN) → REJECTED
@@ -13,8 +14,8 @@
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type IdeaStatus = 'SUBMITTED' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'
-export type ReviewAction = 'START_REVIEW' | 'ACCEPT' | 'REJECT' | 'ABANDON'
+export type IdeaStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'
+export type ReviewAction = 'SUBMIT' | 'START_REVIEW' | 'ACCEPT' | 'REJECT' | 'ABANDON'
 export type UserRole = 'SUBMITTER' | 'ADMIN' | 'SUPERADMIN'
 
 // ─── Error classes ────────────────────────────────────────────────────────────
@@ -66,6 +67,15 @@ export class AlreadyReviewedError extends Error {
  * @throws {InvalidTransitionError} for any other disallowed transition
  */
 export function transition(current: IdeaStatus, action: ReviewAction, role: UserRole): IdeaStatus {
+  // T001 — Draft Management: DRAFT → SUBMITTED is author-triggered; handled before
+  // role guards because the author identity check is enforced by the calling Server
+  // Action BEFORE transition() is called (data-model.md §3.4). The state machine
+  // only validates that SUBMIT is the action being requested from DRAFT state.
+  if (current === 'DRAFT') {
+    if (action === 'SUBMIT') return 'SUBMITTED'
+    throw new InvalidTransitionError(current, action)
+  }
+
   // Guard: already reviewed — same action on a terminal state (e.g. re-accepting an accepted idea)
   if (
     (current === 'ACCEPTED' && action === 'ACCEPT') ||
