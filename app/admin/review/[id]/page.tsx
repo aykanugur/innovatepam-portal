@@ -16,6 +16,7 @@ import { db } from '@/lib/db'
 import ReviewActionPanel from '@/components/admin/review-action-panel'
 import DecisionCard from '@/components/admin/decision-card'
 import AbandonReviewButton from '@/components/admin/abandon-review-button'
+import type { AttachmentRow } from '@/components/ideas/attachments-table'
 import { STATUS_BADGE_CLASSES } from '@/constants/status-badges'
 import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
 import type { FieldDefinition } from '@/types/field-template'
@@ -57,6 +58,8 @@ export default async function AdminReviewPage({ params }: PageProps) {
       review: {
         include: { reviewer: { select: { displayName: true } } },
       },
+      // T016 — fetch attachments for admin delete affordance (US-025)
+      attachments: { orderBy: { createdAt: 'asc' } },
     },
   })
 
@@ -68,6 +71,7 @@ export default async function AdminReviewPage({ params }: PageProps) {
 
   // T014 — fetch field template for the idea's category when Smart Forms flag is on
   const smartFormsEnabled = process.env.FEATURE_SMART_FORMS_ENABLED === 'true'
+  const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
   let fieldTemplates: FieldDefinition[] | null = null
   if (smartFormsEnabled) {
     const template = await db.categoryFieldTemplate.findUnique({
@@ -149,6 +153,16 @@ export default async function AdminReviewPage({ params }: PageProps) {
           <ReviewActionPanel
             idea={{ id: idea.id, status: idea.status, authorId: idea.authorId }}
             currentUser={currentUser}
+            attachments={idea.attachments.map(
+              (a): AttachmentRow => ({
+                id: a.id,
+                fileName: a.fileName,
+                fileSize: a.fileSize,
+                mimeType: a.mimeType,
+                createdAt: a.createdAt,
+              })
+            )}
+            multiAttachmentEnabled={multiAttachmentEnabled}
           />
         )}
 

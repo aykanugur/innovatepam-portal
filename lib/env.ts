@@ -22,6 +22,14 @@ export const envSchema = z.object({
   FEATURE_ANALYTICS_ENABLED: z.string().default('false'),
   // T002 — Smart Forms: category-specific dynamic fields (FR-010)
   FEATURE_SMART_FORMS_ENABLED: z.string().default('false'),
+  // T001 (US-022) — Multi-Media Attachments: private Vercel Blob storage
+  // Empty string is treated as "not set" (local filesystem fallback is used)
+  BLOB_READ_WRITE_TOKEN: z
+    .string()
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
+  // T001 (US-022) — Multi-Media Attachments: gates upload/download/delete (FR-019)
+  FEATURE_MULTI_ATTACHMENT_ENABLED: z.string().default('false'),
 })
 
 export type Env = z.infer<typeof envSchema>

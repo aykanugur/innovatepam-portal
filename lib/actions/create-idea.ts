@@ -18,10 +18,12 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
+import { storageDel } from '@/lib/storage'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { ideaSubmitRateLimiter } from '@/lib/rate-limit'
 import { CreateIdeaSchema, buildDynamicFieldsSchema } from '@/lib/validations/idea'
+import { AttachmentUrlsSchema } from '@/lib/validations/attachment'
 import type { DynamicFields } from '@/types/field-template'
 
 export interface CreateIdeaResult {
@@ -162,38 +164,86 @@ export async function createIdeaAction(formData: FormData): Promise<CreateIdeaRe
     }
   }
 
-  // ── Persist ───────────────────────────────────────────────────────────────
-  try {
-    const idea = await db.idea.create({
-      data: {
-        title: parsed.data.title,
-        description: parsed.data.description,
-        category: parsed.data.category,
-        visibility: parsed.data.visibility,
-        status: 'SUBMITTED',
-        authorId: userId,
-        attachmentPath,
-        // T009 — Smart Forms: persist validated dynamic fields (FR-002)
-        dynamicFields: validatedDynamicFields ?? undefined,
-      },
-    })
+  // ── Multi-attachment URLs (FR-005 server-side count guard) ─────────────────
+  const multiAttachmentEnabled = process.env.FEATURE_MULTI_ATTACHMENT_ENABLED === 'true'
+  let attachmentUrls: string[] = []
 
-    await db.auditLog.create({
-      data: {
-        actorId: userId,
-        action: 'IDEA_CREATED',
-        targetId: idea.id,
-        metadata: {
-          ideaTitle: idea.title,
-          visibility: idea.visibility,
-          // FR-012: include dynamic fields in audit log when present
-          ...(validatedDynamicFields ? { dynamicFields: validatedDynamicFields } : {}),
+  if (multiAttachmentEnabled) {
+    const rawUrls = formData.get('attachmentUrls')
+    const urlsResult = AttachmentUrlsSchema.safeParse(
+      rawUrls && typeof rawUrls === 'string' ? JSON.parse(rawUrls) : []
+    )
+    if (!urlsResult.success) {
+      const firstErr = urlsResult.error.issues[0]?.message
+      return { error: firstErr ?? 'Invalid attachment URLs.' }
+    }
+    attachmentUrls = urlsResult.data
+  }
+
+  // ── Persist (atomic transaction) ─────────────────────────────────────────
+  try {
+    const idea = await db.$transaction(async (tx) => {
+      const created = await tx.idea.create({
+        data: {
+          title: parsed.data.title,
+          description: parsed.data.description,
+          category: parsed.data.category,
+          visibility: parsed.data.visibility,
+          status: 'SUBMITTED',
+          authorId: userId,
+          attachmentPath,
+          // T009 — Smart Forms: persist validated dynamic fields (FR-002)
+          dynamicFields: validatedDynamicFields ?? undefined,
         },
-      },
+      })
+
+      // T009 — Multi-attachments: create IdeaAttachment records (FR-001, US-022)
+      if (attachmentUrls.length > 0) {
+        await tx.ideaAttachment.createMany({
+          data: attachmentUrls.map((blobUrl) => ({
+            ideaId: created.id,
+            blobUrl,
+            // Derive a readable filename from the URL path segment
+            fileName: decodeURIComponent(blobUrl.split('/').pop()?.split('?')[0] ?? 'attachment'),
+            fileSize: 0, // Content-Length came from the upload step; not re-read here
+            mimeType: 'application/octet-stream', // stored MIME is in the blob, not re-checked here
+            uploadedById: userId,
+          })),
+        })
+      }
+
+      await tx.auditLog.create({
+        data: {
+          actorId: userId,
+          action: 'IDEA_CREATED',
+          targetId: created.id,
+          metadata: {
+            ideaTitle: created.title,
+            visibility: created.visibility,
+            // FR-012: include dynamic fields in audit log when present
+            ...(validatedDynamicFields ? { dynamicFields: validatedDynamicFields } : {}),
+            ...(attachmentUrls.length > 0 ? { attachmentCount: attachmentUrls.length } : {}),
+          },
+        },
+      })
+
+      return created
     })
 
     return { id: idea.id }
-  } catch {
+  } catch (err) {
+    // FR-009: orphaned-blob cleanup — delete already-uploaded blobs if transaction fails
+    if (attachmentUrls.length > 0) {
+      try {
+        await storageDel(attachmentUrls)
+      } catch (delErr) {
+        // Non-fatal: log but do not mask the original error
+        // eslint-disable-next-line no-console
+        console.error('[createIdeaAction] Orphaned blob cleanup failed:', delErr)
+      }
+    }
+    // eslint-disable-next-line no-console
+    console.error('[createIdeaAction] Transaction failed:', err)
     return { error: 'Failed to save your idea. Please try again.' }
   }
 }
