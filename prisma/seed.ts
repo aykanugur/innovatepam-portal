@@ -11,7 +11,16 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { hashPassword, generateToken } from '../lib/auth-utils'
 import { CATEGORY_FIELD_TEMPLATES } from '../constants/field-templates'
 
-// ─── Seed data constants ──────────────────────────────────────────────────────
+// ─── Seed data constants ────────────────────────────────────────────────
+
+// EPIC-V2-04: default 2-stage pipelines — one per category, all isDefault=true
+const DEFAULT_PIPELINES: Array<{ name: string; categorySlug: string }> = [
+  { name: 'Default Review', categorySlug: 'process-improvement' },
+  { name: 'Default Review', categorySlug: 'new-product-service' },
+  { name: 'Default Review', categorySlug: 'cost-reduction' },
+  { name: 'Default Review', categorySlug: 'employee-experience' },
+  { name: 'Default Review', categorySlug: 'technical-innovation' },
+]
 
 const SEED_IDEAS = [
   {
@@ -180,6 +189,43 @@ async function main() {
     console.log(
       `\nSeeded/updated ${Object.keys(CATEGORY_FIELD_TEMPLATES).length} CategoryFieldTemplate rows.`
     )
+
+    // ── EPIC-V2-04: Seed default ReviewPipeline rows ────────────────────────
+    // Idempotent: upsert on categorySlug. Each pipeline gets 2 stages:
+    //   Stage 1 — Initial Review (isDecisionStage=false)
+    //   Stage 2 — Final Decision (isDecisionStage=true)
+    for (const pipeline of DEFAULT_PIPELINES) {
+      const existing = await prisma.reviewPipeline.findUnique({
+        where: { categorySlug: pipeline.categorySlug },
+        include: { stages: true },
+      })
+      if (!existing) {
+        await prisma.reviewPipeline.create({
+          data: {
+            name: pipeline.name,
+            categorySlug: pipeline.categorySlug,
+            isDefault: true,
+            stages: {
+              create: [
+                {
+                  name: 'Initial Review',
+                  description: 'First-pass review by an admin.',
+                  order: 1,
+                  isDecisionStage: false,
+                },
+                {
+                  name: 'Final Decision',
+                  description: 'Final accept or reject decision.',
+                  order: 2,
+                  isDecisionStage: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+    }
+    console.log(`\nSeeded/verified ${DEFAULT_PIPELINES.length} default ReviewPipeline rows.`)
   } finally {
     await prisma.$disconnect()
   }

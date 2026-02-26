@@ -10,6 +10,7 @@
 
 import Link from 'next/link'
 import { CATEGORY_LABEL, type CategorySlug } from '@/constants/categories'
+import ClaimStageButton from '@/components/admin/claim-stage-button'
 
 export interface PendingSummary {
   id: string
@@ -21,6 +22,8 @@ export interface PendingSummary {
 
 interface PendingQueueProps {
   ideas: PendingSummary[]
+  /** When true, shows "Start Review" (V2 claimStage) instead of V1 review link */
+  multiStageEnabled?: boolean
 }
 
 function relativeTime(date: string | Date): string {
@@ -35,7 +38,7 @@ function relativeTime(date: string | Date): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export default function PendingQueue({ ideas }: PendingQueueProps) {
+export default function PendingQueue({ ideas, multiStageEnabled = false }: PendingQueueProps) {
   if (ideas.length === 0) {
     return (
       <section aria-label="Pending review queue">
@@ -123,13 +126,17 @@ export default function PendingQueue({ ideas }: PendingQueueProps) {
                   {relativeTime(idea.createdAt)}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/admin/review/${idea.id}`}
-                    className="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
-                    style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
-                  >
-                    Review
-                  </Link>
+                  {multiStageEnabled ? (
+                    <ClaimStageButton ideaId={idea.id} />
+                  ) : (
+                    <Link
+                      href={`/admin/review/${idea.id}`}
+                      className="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
+                      style={{ background: 'linear-gradient(135deg, #00c8ff, #0070f3)' }}
+                    >
+                      Review
+                    </Link>
+                  )}
                 </td>
               </tr>
             ))}

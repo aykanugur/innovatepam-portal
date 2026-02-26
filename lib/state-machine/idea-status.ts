@@ -10,6 +10,21 @@
  *   UNDER_REVIEW + ACCEPT        (ADMIN | SUPERADMIN) → ACCEPTED
  *   UNDER_REVIEW + REJECT        (ADMIN | SUPERADMIN) → REJECTED
  *   UNDER_REVIEW + ABANDON       (SUPERADMIN only)    → SUBMITTED
+ *
+ * V2 (EPIC-V2-04 — Multi-Stage Review Pipeline):
+ *   When FEATURE_MULTI_STAGE_REVIEW_ENABLED=true, the START_REVIEW trigger
+ *   is routed through `lib/actions/claim-stage.ts` (claimStage) instead of
+ *   `lib/actions/start-review.ts` (V1 IdeaReview path). The resulting
+ *   SUBMITTED → UNDER_REVIEW status change is identical; only the backing
+ *   record differs (IdeaStageProgress vs IdeaReview).
+ *
+ *   Decision-stage ACCEPT/REJECT outcomes are written by `completeStage()`
+ *   directly on the Idea row. Escalation resolution (SUPERADMIN) is handled
+ *   by `resolveEscalation()`. Neither path goes through this state machine —
+ *   they operate directly on `Idea.status` inside a Prisma $transaction.
+ *
+ *   This file remains authoritative for the V1 review flow and all unit tests
+ *   that validate pure transition logic.
  */
 
 // ─── Types ────────────────────────────────────────────────────────────────────

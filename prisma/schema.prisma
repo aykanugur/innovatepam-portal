@@ -44,6 +44,20 @@ enum AuditAction {
   DRAFT_SAVED           // T001 — Draft Management: user created or updated a draft
   DRAFT_DELETED         // T001 — Draft Management: user permanently deleted a draft
   DRAFT_SUBMITTED       // T001 — Draft Management: draft transitioned to SUBMITTED
+  // EPIC-V2-04 — Multi-Stage Review Pipeline
+  STAGE_STARTED         // admin claimed Stage 1 (all IdeaStageProgress rows created) or next stage was activated
+  STAGE_COMPLETED       // admin (or SUPERADMIN escalation resolver) completed a stage
+  PIPELINE_CREATED      // SUPERADMIN created a new custom pipeline
+  PIPELINE_UPDATED      // SUPERADMIN edited an existing pipeline
+}
+
+/// EPIC-V2-04 — outcome recorded on a completed IdeaStageProgress row.
+/// PASS / ESCALATE valid on non-decision stages; ACCEPTED / REJECTED on decision stage only.
+enum StageOutcome {
+  PASS      // non-decision stage: advance to next stage
+  ESCALATE  // non-decision stage: halt and surface in escalation queue
+  ACCEPTED  // decision stage: idea is accepted
+  REJECTED  // decision stage: idea is rejected
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -63,6 +77,8 @@ model User {
   auditLogs   AuditLog[]        @relation("UserAuditLogs")
   // US-022: uploaded attachments (relation name "UserAttachments")
   attachments IdeaAttachment[]  @relation("UserAttachments")
+  // EPIC-V2-04: stages claimed/reviewed by this admin
+  stageProgress IdeaStageProgress[] @relation("UserStageReviews")
 }
 
 model Idea {
@@ -92,6 +108,8 @@ model Idea {
   review      IdeaReview?     @relation("IdeaReview")
   // US-022: normalized attachment records (cascade-deletes with idea, FR-002)
   attachments IdeaAttachment[] @relation("IdeaAttachments")
+  // EPIC-V2-04: stage progress rows (one per stage, created atomically at claim time)
+  stageProgress IdeaStageProgress[] @relation("IdeaStageProgress")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -115,6 +133,8 @@ model CategoryFieldTemplate {
   @@unique([category])
 }
 
+// DEPRECATED in V2.0: use IdeaStageProgress for new ideas when FEATURE_MULTI_STAGE_REVIEW_ENABLED=true.
+// Kept for V1 in-flight review compatibility. Scheduled for removal in V3.0.
 model IdeaReview {
   id        String          @id @default(cuid())
   decision  ReviewDecision? // null until finalized
@@ -169,4 +189,62 @@ model IdeaAttachment {
   /// Prevents duplicate rows and enables idempotent upsert in V1 migration script
   @@unique([ideaId, blobUrl])
   @@index([ideaId])
+}
+
+// ─── EPIC-V2-04: Multi-Stage Review Pipeline ─────────────────────────────────
+
+/// A configurable review workflow for one idea category.
+/// Bound 1:1 to a category via categorySlug (matches CATEGORIES constant — no FK).
+/// isDefault=true pipelines are seeded and cannot be deleted.
+model ReviewPipeline {
+  id           String   @id @default(cuid())
+  name         String   // display name, e.g. "Default 2-Stage"
+  categorySlug String   @unique // FK-by-convention to CATEGORIES constant slugs
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stages ReviewPipelineStage[]
+}
+
+/// One ordered step within a ReviewPipeline.
+/// Exactly one stage per pipeline must have isDecisionStage=true (enforced in Zod/Server Action).
+model ReviewPipelineStage {
+  id              String   @id @default(cuid())
+  pipelineId      String
+  name            String   // max 60 chars — enforced in Zod
+  description     String?
+  order           Int      // 1-based, contiguous
+  isDecisionStage Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  pipeline ReviewPipeline      @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  progress IdeaStageProgress[]
+
+  @@unique([pipelineId, order])
+  @@index([pipelineId, order])
+}
+
+/// Tracks a single idea's progress through one stage of its review pipeline.
+/// Rows are created for ALL stages atomically when Stage 1 is first claimed.
+/// outcome is null until the assigned admin completes the stage.
+model IdeaStageProgress {
+  id          String        @id @default(cuid())
+  ideaId      String
+  stageId     String
+  reviewerId  String?       // set when an admin claims the stage
+  outcome     StageOutcome? // null until stage is completed
+  comment     String?       // null until stage is completed; min 10, max 2000 chars
+  startedAt   DateTime?     // set when stage becomes active for review
+  completedAt DateTime?     // set when outcome is recorded
+  createdAt   DateTime      @default(now())
+
+  idea     Idea                @relation("IdeaStageProgress", fields: [ideaId], references: [id], onDelete: Cascade)
+  stage    ReviewPipelineStage @relation(fields: [stageId], references: [id])
+  reviewer User?               @relation("UserStageReviews", fields: [reviewerId], references: [id])
+
+  @@unique([ideaId, stageId])
+  @@index([ideaId])
+  @@index([stageId])
+  @@index([outcome]) // supports efficient escalation queue query
 }
