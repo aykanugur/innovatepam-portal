@@ -97,29 +97,38 @@ Tests MUST fail before implementation begins.
 - Edge-case tests from the story's "Edge Cases & Negative Scenarios" table
   MUST be written alongside the AC tests, not deferred.
 
-### IV. Scope Protection — Phase 1 MVP Guard
+### IV. Scope Protection — Active Phase Guard
 
 AI MUST actively identify and reject any feature, behavior, data model
-addition, or UI element that belongs to a phase beyond Phase 1 MVP.
+addition, or UI element that has not been scoped into the current active
+phase. The active phase is tracked below and MUST be amended when a new
+phase begins.
 
-- Phase 1 MVP is defined as: all P1 (Must) stories in
-  `specs/prd-innovatepam.md` sections 5 and 6 (US-001 through US-013 and
-  US-016). This phase is complete when all these stories have passing tests
-  and the GA smoke test passes.
-- Phase 2+ features explicitly out of scope until Phase 1 is declared
-  complete by the project owner include (non-exhaustive):
+**Current active phase: V2.0 — Multi-Stage Review Pipeline**
+
+- Phase 1 MVP (US-001 to US-013, US-016) is ✅ COMPLETE. It was declared
+  done and tagged `v1.0.0`. All Phase 1 gates passed.
+- V2.0 is defined by the six epics in `specs/v2.0/`. The canonical source
+  of truth is `specs/v2.0/prd-v2.0.md` and the Epic files under
+  `specs/v2.0/epics/`. Only stories approved in those files are in scope.
+- V2.0 epic status (as of 2026-02-27):
+  - EPIC-V2-01 Foundation & Pipeline Infrastructure — ✅ Complete
+  - EPIC-V2-02 Smart Forms — ✅ Complete
+  - EPIC-V2-03 Claim & Complete Stage — ✅ Complete
+  - EPIC-V2-04 Decision Stage & Final Transitions — ✅ Complete
+  - EPIC-V2-05 Blind Review — ✅ Complete (merged 2026-02-26)
+  - EPIC-V2-06 Scoring System — ✅ Complete (merged 2026-02-27)
+- Features explicitly out of scope for V2.0 unless added to `prd-v2.0.md`:
   - Multi-file attachments or drag-and-drop galleries
   - Social features: comments, upvoting, reactions, @mentions
-  - Smart/AI-assisted form completion
-  - Multimedia idea submissions (video, audio)
   - GDPR data export / account deletion
   - External SSO (SAML, OAuth with corporate IdP)
-  - Advanced analytics beyond the Phase 1 analytics page (US-014)
-  - Notifications / email digests beyond verification email
-- When a user requests a Phase 2+ feature, AI MUST respond:
-  "This feature is not in Phase 1 MVP scope. It is deferred to Phase 2.
-  Should I log it as an open question in the PRD, or would you like to
-  formally scope it into an existing story?"
+  - Notification digests / push alerts
+  - AI-generated idea content
+- When a user requests an out-of-scope feature, AI MUST respond:
+  "This feature is not in the current V2.0 scope. Should I log it as an
+  open question in prd-v2.0.md, or would you like to formally add it to
+  EPIC-V2-06 or a new epic?"
 
 ### V. Traceability & Auditability
 
@@ -143,37 +152,141 @@ The following gates are mandatory before any story can be considered done.
 All gates are enforced in CI (`npm run lint && npm run test:unit && npm run build`).
 A story that fails any gate MUST NOT be merged to `main`.
 
-| Gate | Threshold | Enforced By |
-|------|-----------|-------------|
-| TypeScript compilation | Zero errors | `npm run build` |
-| ESLint | Zero warnings or errors | `npm run lint` |
-| Unit + integration test pass | 100% of story's AC tests pass | `npm run test:unit` |
-| Line coverage (overall) | ≥ 80% | Vitest coverage threshold |
-| E2E critical paths (at GA) | All 4 Playwright paths pass | `npm run test:e2e` |
-| Smoke test (production) | All 6 URL checks pass | Manual (US-016 checklist) |
+| Gate                         | Threshold                     | Enforced By               |
+| ---------------------------- | ----------------------------- | ------------------------- |
+| TypeScript compilation       | Zero errors                   | `npm run build`           |
+| ESLint                       | Zero warnings or errors       | `npm run lint`            |
+| Unit + integration test pass | 100% of story's AC tests pass | `npm run test:unit`       |
+| Line coverage (overall)      | ≥ 80%                         | Vitest coverage threshold |
+| E2E critical paths (at GA)   | All 4 Playwright paths pass   | `npm run test:e2e`        |
+| Smoke test (production)      | All 6 URL checks pass         | Manual (US-016 checklist) |
 
 **No exceptions.** Coverage threshold violations, TypeScript errors, and
 lint failures are not "acceptable for now" — they are blockers.
 
 ---
 
-## 3. Required Implementation Workflow
+## 3. Canonical Project Structure
+
+This is the authoritative directory layout. AI MUST place new files in the
+correct location. Adding files elsewhere without justification is a violation.
+
+```
+innovatepam-portal/
+├── app/                    Next.js App Router (pages + API route handlers)
+│   ├── (auth)/             Unauthenticated pages: login, register, verify-email
+│   ├── (main)/             Authenticated user pages: ideas, my-ideas
+│   ├── admin/              Admin pages: queue, review, review-config, users, analytics
+│   ├── api/                REST Route Handlers (auth, ideas, attachments, cron, test)
+│   ├── dashboard/          Post-login redirect hub
+│   ├── forbidden/          403 page
+│   └── settings/           User profile settings
+│
+├── components/             React components (UI only — no DB calls)
+│   ├── admin/              Admin workflow components (queue, stage panel, escalation)
+│   ├── analytics/          Chart components
+│   ├── auth/               Login/register forms
+│   ├── ideas/              Idea card, form, detail, draft UI, score section
+│   ├── pipeline/           Pipeline config form + stage row
+│   ├── settings/           Profile forms
+│   └── ui/                 shadcn/ui primitives (button, alert, tabs, tooltip, etc.)
+│
+├── lib/                    Server-side business logic
+│   ├── actions/            ALL Server Actions (one concern per file, verb-noun names)
+│   ├── state-machine/      Pure state transition validators (no DB, no side effects)
+│   ├── validations/        Zod schemas (idea, pipeline, review, user, draft, attachment)
+│   ├── generated/prisma/   Prisma generated types — do NOT edit
+│   ├── auth-utils.ts       hasRole() helper + session re-read patterns
+│   ├── blind-review.ts     maskAuthorIfBlind() — EPIC-V2-05
+│   ├── db.ts               Prisma client singleton
+│   ├── email.ts            Resend email sender
+│   ├── env.ts              Zod-validated environment variables (single source)
+│   ├── rate-limit.ts       Upstash rate limiter
+│   ├── storage.ts          Vercel Blob helpers
+│   ├── api-error.ts        Typed API error factory
+│   └── utils.ts            cn() + general utilities
+│
+├── constants/              Static data (categories, field templates, status badges)
+├── types/                  TypeScript type declarations (augmented next-auth, etc.)
+│
+├── prisma/
+│   ├── schema.prisma       Single source of truth for the data model
+│   ├── seed.ts             Dev seed
+│   └── migrations/         Applied migrations — NEVER edit manually
+│
+├── tests/
+│   ├── unit/               Vitest unit tests (mocked DB) — test path for server actions
+│   │   ├── actions/        → tests/unit/actions/<action-name>.test.ts
+│   │   ├── lib/            → tests/unit/lib/<util-name>.test.ts
+│   │   └── *.test.ts       → tests/unit/<module>.test.ts
+│   ├── integration/        Vitest integration tests (real DB required)
+│   └── e2e/                Playwright end-to-end tests
+│
+├── specs/                  All product specifications (READ-ONLY for implementation)
+│   ├── prd-innovatepam.md  V1 PRD
+│   ├── epics/              V1 Epic files
+│   ├── stories/epic-XX/    V1 User Stories (US-001 to US-016)
+│   └── v2.0/               V2.0 all specs
+│       ├── prd-v2.0.md
+│       ├── epics/          V2 Epic files (EPIC-V2-01 to V2-06)
+│       ├── stories/epic-v2-XX/   V2 User Stories (US-017 to US-044)
+│       └── 001-*/          Sprint-level specs with contracts, plans, tasks
+│
+├── scripts/                One-off admin scripts (run with `npx tsx scripts/<name>.ts`)
+├── memory-banks/           AI context files — load before coding (do not move)
+├── public/                 Static assets + local dev uploads
+│
+├── auth.ts                 Auth.js v5 configuration
+├── proxy.ts                Route protection + RBAC middleware (replaces middleware.ts)
+├── next.config.ts          Next.js config
+├── prisma.config.ts        Prisma config
+├── vercel.json             Vercel cron + headers
+├── vitest.config.ts        Test + coverage config
+├── playwright.config.ts    E2E config
+├── components.json         shadcn/ui registry
+└── README.md               Developer onboarding (start here)
+```
+
+### File Placement Rules
+
+| New artifact         | Correct location                                 |
+| -------------------- | ------------------------------------------------ |
+| New page             | `app/<route>/page.tsx`                           |
+| New API endpoint     | `app/api/<resource>/route.ts`                    |
+| New Server Action    | `lib/actions/<verb>-<noun>.ts`                   |
+| New Zod schema       | `lib/validations/<domain>.ts`                    |
+| New pure utility     | `lib/<utility-name>.ts`                          |
+| New state machine    | `lib/state-machine/<domain>.ts`                  |
+| New React component  | `components/<domain>/<ComponentName>.tsx`        |
+| New constant         | `constants/<name>.ts`                            |
+| New unit test        | `tests/unit/<layer>/<module>.test.ts`            |
+| New integration test | `tests/integration/<feature>.test.ts`            |
+| New E2E test         | `tests/e2e/<feature>.spec.ts`                    |
+| New V2 story         | `specs/v2.0/stories/epic-v2-XX/US-XXX-<slug>.md` |
+| New V2 epic          | `specs/v2.0/epics/EPIC-V2-XX-<slug>.md`          |
+
+---
+
+## 4. Required Implementation Workflow
 
 This is the mandatory step sequence for every User Story. Skipping or
 reordering steps is a Constitution violation.
 
 ```
 Step 1 — READ THE SPEC
-  Open the assigned Story file: specs/stories/epicXX/US-XXX-*.md
+  V1 stories: specs/stories/epic-XX/US-XXX-*.md
+  V2 stories: specs/v2.0/stories/epic-v2-XX/US-XXX-*.md  ← current active path
   Read: Story Statement, ALL Acceptance Criteria, Edge Cases table,
   Technical Notes, Dependencies, and Definition of Done.
-  Cross-reference: specs/prd-innovatepam.md for the corresponding
-  Functional Requirement (FR-XX).
+  Cross-reference: specs/prd-innovatepam.md (V1) or specs/v2.0/prd-v2.0.md (V2)
+  for the corresponding Functional Requirement.
   Output: Confirm understanding by listing each AC number before proceeding.
   GATE: If any dependency story is incomplete, STOP and resolve it first.
 
 Step 2 — WRITE FAILING TESTS (RED phase)
-  Create the test file at __tests__/<layer>/<story-slug>.test.ts
+  Unit tests   → tests/unit/<layer>/<story-slug>.test.ts
+  Integration  → tests/integration/<story-slug>.test.ts
+  (Do NOT use __tests__/ — that directory does not exist in this project)
   Write one test per Acceptance Criterion (Given/When/Then format).
   Write tests for every row in the Edge Cases table.
   Run: npm run test:unit -- <test-file> → ALL tests MUST fail.
@@ -192,13 +305,13 @@ Step 4 — STOP AND PROMPT FOR COMMIT
   AI MUST NOT auto-commit. Present the following for user approval:
 
   "✅ US-XXX complete. All [N] AC tests pass. Coverage [X]%.
-  
+
   Suggested commit:
   feat(<scope>): <description> — US-XXX AC-1 to AC-N
-  
+
   Files changed:
   [list of changed files]
-  
+
   Ready to commit and move to US-XXX+1?"
 ```
 
@@ -226,4 +339,17 @@ Step 4 — STOP AND PROMPT FOR COMMIT
   this Constitution MUST be justified in writing (in the relevant story
   file's "Open Questions" section) before AI acts on them.
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-24
+**Version**: 1.2.1 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-27
+
+> **v1.2.1 changelog** (2026-02-27): Step 1 V2 story path corrected from
+> `specs/v2.0/stories/US-XXX-*.md` → `specs/v2.0/stories/epic-v2-XX/US-XXX-*.md` to match
+> actual directory layout. Step 1 V1 path corrected `epicXX` → `epic-XX`. PATCH bump.
+>
+> **v1.2.0 changelog** (2026-02-27): Added §3 "Canonical Project Structure" — authoritative
+> directory layout, file placement rules, and spec path reference for V1 + V2.0.
+> Former §3 "Required Implementation Workflow" renumbered to §4. MINOR bump.
+>
+> **v1.1.0 changelog** (2026-02-27): Principle IV updated — Phase 1 MVP
+> declared complete; replaced with V2.0 Active Phase Guard tracking current
+> epic status. Step 2 test path corrected from `__tests__/` to `tests/unit/`
+> and `tests/integration/`. Step 1 spec path updated for V2.0 story location.

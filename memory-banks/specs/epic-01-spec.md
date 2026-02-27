@@ -13,15 +13,15 @@
 
 Epic-01 is **infrastructure only**. The following are explicitly out of scope:
 
-| Out of Scope | Lives In |
-|---|---|
+| Out of Scope                                              | Lives In                |
+| --------------------------------------------------------- | ----------------------- |
 | NextAuth.js configuration, JWT sessions, `auth.config.ts` | EPIC-02 / 001-auth-rbac |
-| RBAC enforcement (`middleware.ts`, role checks) | EPIC-02 / 001-auth-rbac |
-| Email verification logic (Resend, `lib/email.ts`) | EPIC-02 / 001-auth-rbac |
-| Rate limiting (`lib/rate-limit.ts`, Upstash) | EPIC-02 / 001-auth-rbac |
-| Password hashing (`lib/hash.ts`) | EPIC-02 / 001-auth-rbac |
-| Any login/register UI or API routes | EPIC-02 / 001-auth-rbac |
-| Idea CRUD, review workflow | EPIC-03 |
+| RBAC enforcement (`middleware.ts`, role checks)           | EPIC-02 / 001-auth-rbac |
+| Email verification logic (Resend, `lib/email.ts`)         | EPIC-02 / 001-auth-rbac |
+| Rate limiting (`lib/rate-limit.ts`, Upstash)              | EPIC-02 / 001-auth-rbac |
+| Password hashing (`lib/hash.ts`)                          | EPIC-02 / 001-auth-rbac |
+| Any login/register UI or API routes                       | EPIC-02 / 001-auth-rbac |
+| Idea CRUD, review workflow                                | EPIC-03                 |
 
 Epic-01 tasks must not import from `next-auth`, `lib/auth.config.ts`, `lib/hash.ts`, `lib/email.ts`, or `lib/rate-limit.ts`.
 
@@ -36,12 +36,12 @@ Epic-01 tasks must not import from `next-auth`, `lib/auth.config.ts`, `lib/hash.
 
 **Acceptance Criteria**:
 
-| AC ID | Criterion |
-|---|---|
+| AC ID    | Criterion                                                                             |
+| -------- | ------------------------------------------------------------------------------------- |
 | AC-001-1 | `npm run build` completes with zero TypeScript errors and zero Next.js build warnings |
-| AC-001-2 | `npm run lint` reports zero errors and zero warnings |
-| AC-001-3 | A shadcn/ui `Button` component renders on `/` with Tailwind styles applied |
-| AC-001-4 | `.prettierrc` is committed; VS Code auto-formats `.ts`/`.tsx` on save |
+| AC-001-2 | `npm run lint` reports zero errors and zero warnings                                  |
+| AC-001-3 | A shadcn/ui `Button` component renders on `/` with Tailwind styles applied            |
+| AC-001-4 | `.prettierrc` is committed; VS Code auto-formats `.ts`/`.tsx` on save                 |
 
 ---
 
@@ -52,11 +52,11 @@ Epic-01 tasks must not import from `next-auth`, `lib/auth.config.ts`, `lib/hash.
 
 **Acceptance Criteria**:
 
-| AC ID | Criterion |
-|---|---|
+| AC ID    | Criterion                                                                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
 | AC-002-1 | `npx prisma migrate dev --name init` completes without errors; `User`, `Idea`, `IdeaReview` tables created |
-| AC-002-2 | `npx prisma studio` shows all three tables with correct columns and relationships |
-| AC-002-3 | `prisma.user.findMany()` returns `[]` without error — confirms connectivity |
+| AC-002-2 | `npx prisma studio` shows all three tables with correct columns and relationships                          |
+| AC-002-3 | `prisma.user.findMany()` returns `[]` without error — confirms connectivity                                |
 
 ---
 
@@ -67,12 +67,12 @@ Epic-01 tasks must not import from `next-auth`, `lib/auth.config.ts`, `lib/hash.
 
 **Acceptance Criteria**:
 
-| AC ID | Criterion |
-|---|---|
-| AC-003-1 | `npm run dev` starts without errors and `/` returns HTTP 200 when `.env.local` is populated |
+| AC ID    | Criterion                                                                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| AC-003-1 | `npm run dev` starts without errors and `/` returns HTTP 200 when `.env.local` is populated                |
 | AC-003-2 | Push to `main` triggers a Vercel deployment that completes without errors; production URL returns HTTP 200 |
-| AC-003-3 | `.env.example` lists all required variable names (no values) with a comment describing each |
-| AC-003-4 | `.env.local` is NOT tracked by git (present in `.gitignore`) |
+| AC-003-3 | `.env.example` lists all required variable names (no values) with a comment describing each                |
+| AC-003-4 | `.env.local` is NOT tracked by git (present in `.gitignore`)                                               |
 
 ---
 
@@ -82,49 +82,49 @@ Epic-01 tasks must not import from `next-auth`, `lib/auth.config.ts`, `lib/hash.
 
 ### US-001 Status
 
-| Item | Status | Notes |
-|---|---|---|
-| Next.js 16 app scaffolded | ✅ DONE | `app/layout.tsx`, `app/page.tsx` present |
-| TypeScript strict mode | ✅ DONE | `tsconfig.json` with `"strict": true` |
-| Tailwind CSS v4 | ✅ DONE | `postcss.config.mjs` present; `globals.css` with Tailwind directives |
-| ESLint configured | ✅ DONE | `eslint.config.mjs` present |
-| **shadcn/ui installed** | ❌ MISSING | No `components/ui/` directory; Button not on `/` |
-| **Prettier `.prettierrc`** | ❌ MISSING | Not listed in project root |
-| **lint-staged / husky** | ❌ MISSING | Not in `package.json` devDependencies |
-| `npm run build` passes | ⚠️ UNVERIFIED | TypeScript passes; full Next.js build with shadcn pending |
-| `npm run lint` passes | ⚠️ UNVERIFIED | Needs verification after shadcn/ui install |
+| Item                       | Status        | Notes                                                                |
+| -------------------------- | ------------- | -------------------------------------------------------------------- |
+| Next.js 16 app scaffolded  | ✅ DONE       | `app/layout.tsx`, `app/page.tsx` present                             |
+| TypeScript strict mode     | ✅ DONE       | `tsconfig.json` with `"strict": true`                                |
+| Tailwind CSS v4            | ✅ DONE       | `postcss.config.mjs` present; `globals.css` with Tailwind directives |
+| ESLint configured          | ✅ DONE       | `eslint.config.mjs` present                                          |
+| **shadcn/ui installed**    | ❌ MISSING    | No `components/ui/` directory; Button not on `/`                     |
+| **Prettier `.prettierrc`** | ❌ MISSING    | Not listed in project root                                           |
+| **lint-staged / husky**    | ❌ MISSING    | Not in `package.json` devDependencies                                |
+| `npm run build` passes     | ⚠️ UNVERIFIED | TypeScript passes; full Next.js build with shadcn pending            |
+| `npm run lint` passes      | ⚠️ UNVERIFIED | Needs verification after shadcn/ui install                           |
 
 ### US-002 Status
 
-| Item | Status | Notes |
-|---|---|---|
-| Prisma v7 installed | ✅ DONE | `prisma@7.4.1`, `@prisma/adapter-pg`, `@prisma/client` |
-| `prisma.config.ts` with url/directUrl | ✅ DONE | `defineConfig` with `DIRECT_URL ?? DATABASE_URL` |
-| `prisma/schema.prisma` (v7 format) | ✅ DONE | `provider="prisma-client"`, `output="../lib/generated/prisma"` |
-| `lib/db.ts` singleton with PrismaPg adapter | ✅ DONE | Edge-safe PrismaClient |
-| `User` model + `Role` enum | ✅ DONE | Traceability comments present |
-| `VerificationToken` model | ✅ DONE | EPIC-02 concern; present in schema |
-| **`Idea` model** | ❌ MISSING | US-002 requires this |
-| **`IdeaReview` model** | ❌ MISSING | US-002 requires this |
-| **`IdeaStatus` enum** | ❌ MISSING | US-002 requires this |
-| **`IdeaVisibility` enum** | ❌ MISSING | US-002 requires this |
-| **`User.ideas` / `User.reviews` relations** | ❌ MISSING | Required for full schema |
+| Item                                                        | Status      | Notes                                                                                                     |
+| ----------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
+| Prisma v7 installed                                         | ✅ DONE     | `prisma@7.4.1`, `@prisma/adapter-pg`, `@prisma/client`                                                    |
+| `prisma.config.ts` with url/directUrl                       | ✅ DONE     | `defineConfig` with `DIRECT_URL ?? DATABASE_URL`                                                          |
+| `prisma/schema.prisma` (v7 format)                          | ✅ DONE     | `provider="prisma-client"`, `output="../lib/generated/prisma"`                                            |
+| `lib/db.ts` singleton with PrismaPg adapter                 | ✅ DONE     | Edge-safe PrismaClient                                                                                    |
+| `User` model + `Role` enum                                  | ✅ DONE     | Traceability comments present                                                                             |
+| `VerificationToken` model                                   | ✅ DONE     | EPIC-02 concern; present in schema                                                                        |
+| **`Idea` model**                                            | ❌ MISSING  | US-002 requires this                                                                                      |
+| **`IdeaReview` model**                                      | ❌ MISSING  | US-002 requires this                                                                                      |
+| **`IdeaStatus` enum**                                       | ❌ MISSING  | US-002 requires this                                                                                      |
+| **`IdeaVisibility` enum**                                   | ❌ MISSING  | US-002 requires this                                                                                      |
+| **`User.ideas` / `User.reviews` relations**                 | ❌ MISSING  | Required for full schema                                                                                  |
 | **`verificationToken` / `verificationTokenExpiry` on User** | ⚠️ DIVERGED | Story uses inline fields; current schema uses separate `VerificationToken` model (EPIC-02 decision, keep) |
-| Migration run | ❌ BLOCKED | Requires `.env.local` with real Neon credentials |
-| Prisma Studio connectivity verified | ❌ BLOCKED | Requires migration first |
+| Migration run                                               | ❌ BLOCKED  | Requires `.env.local` with real Neon credentials                                                          |
+| Prisma Studio connectivity verified                         | ❌ BLOCKED  | Requires migration first                                                                                  |
 
 ### US-003 Status
 
-| Item | Status | Notes |
-|---|---|---|
-| `.env.example` exists | ✅ DONE | Present in project root |
-| `DATABASE_URL` + `DIRECT_URL` documented | ✅ DONE | With Neon/PgBouncer examples |
-| `AUTH_SECRET` / `NEXTAUTH_URL` documented | ✅ DONE | (EPIC-02 vars — ok to keep) |
-| `SUPERADMIN_EMAIL` documented | ✅ DONE | |
-| Feature flags documented | ✅ DONE | All 5 flags present |
-| **`PORTAL_ENABLED` description comment** | ⚠️ NEEDS CHECK | US-003 requires description per variable |
-| `.env.local` in `.gitignore` | ⚠️ UNVERIFIED | `.gitignore` not yet inspected |
-| **Vercel deployment live** | ❌ PENDING | Not deployed yet |
+| Item                                      | Status         | Notes                                    |
+| ----------------------------------------- | -------------- | ---------------------------------------- |
+| `.env.example` exists                     | ✅ DONE        | Present in project root                  |
+| `DATABASE_URL` + `DIRECT_URL` documented  | ✅ DONE        | With Neon/PgBouncer examples             |
+| `AUTH_SECRET` / `NEXTAUTH_URL` documented | ✅ DONE        | (EPIC-02 vars — ok to keep)              |
+| `SUPERADMIN_EMAIL` documented             | ✅ DONE        |                                          |
+| Feature flags documented                  | ✅ DONE        | All 5 flags present                      |
+| **`PORTAL_ENABLED` description comment**  | ⚠️ NEEDS CHECK | US-003 requires description per variable |
+| `.env.local` in `.gitignore`              | ⚠️ UNVERIFIED  | `.gitignore` not yet inspected           |
+| **Vercel deployment live**                | ❌ PENDING     | Not deployed yet                         |
 
 ---
 
@@ -141,7 +141,6 @@ All tests below must be **written first and confirmed failing** before the corre
 import { describe, it, expect } from 'vitest'
 
 describe('US-001 — Project Scaffold', () => {
-
   // AC-001-3: shadcn/ui Button is importable (fails until shadcn installed)
   it('AC-001-3: shadcn Button component can be imported without errors', async () => {
     const { Button } = await import('@/components/ui/button')
@@ -180,13 +179,13 @@ describe('US-001 — Project Scaffold', () => {
     const stat = await fs.stat(buttonPath)
     expect(stat.isFile()).toBe(true)
   })
-
 })
 ```
 
 **Build / Lint Gates (manual — not Vitest)**:
-- `npm run build` → 0 errors, 0 warnings *(AC-001-1)*
-- `npm run lint` → 0 errors, 0 warnings *(AC-001-2)*
+
+- `npm run build` → 0 errors, 0 warnings _(AC-001-1)_
+- `npm run lint` → 0 errors, 0 warnings _(AC-001-2)_
 
 ---
 
@@ -200,7 +199,6 @@ import { describe, it, expect } from 'vitest'
 import { db } from '@/lib/db'
 
 describe('US-002 — Prisma Schema: Idea + IdeaReview Models', () => {
-
   // AC-002-1: Idea model exists on PrismaClient (fails until model added)
   it('AC-002-1: db.idea property exists on PrismaClient', () => {
     expect(db.idea).toBeDefined()
@@ -245,7 +243,6 @@ describe('US-002 — Prisma Schema: Idea + IdeaReview Models', () => {
     // If Idea relation not yet generated, db.idea will be undefined — RED
     expect(db.idea).toBeDefined()
   })
-
 })
 ```
 
@@ -259,7 +256,6 @@ import { describe, it, expect } from 'vitest'
 import { db } from '@/lib/db'
 
 describe.skipIf(!process.env.INTEGRATION)('US-002 — Live DB Connectivity (AC-002-3)', () => {
-
   it('AC-002-3: prisma.user.findMany() returns empty array without error', async () => {
     const users = await db.user.findMany()
     expect(Array.isArray(users)).toBe(true)
@@ -274,7 +270,6 @@ describe.skipIf(!process.env.INTEGRATION)('US-002 — Live DB Connectivity (AC-0
     const reviews = await db.ideaReview.findMany()
     expect(Array.isArray(reviews)).toBe(true)
   })
-
 })
 ```
 
@@ -291,7 +286,6 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 describe('US-003 — Environment Configuration', () => {
-
   const envExample = readFileSync(join(process.cwd(), '.env.example'), 'utf-8')
   const gitignore = readFileSync(join(process.cwd(), '.gitignore'), 'utf-8')
 
@@ -329,11 +323,9 @@ describe('US-003 — Environment Configuration', () => {
 
   // AC-003-4: .env*.local must be in .gitignore (Next.js default pattern)
   it('AC-003-4: .gitignore contains .env*.local or .env.local pattern', () => {
-    const hasLocalPattern =
-      gitignore.includes('.env*.local') || gitignore.includes('.env.local')
+    const hasLocalPattern = gitignore.includes('.env*.local') || gitignore.includes('.env.local')
     expect(hasLocalPattern).toBe(true)
   })
-
 })
 ```
 
@@ -346,7 +338,6 @@ describe('US-003 — Environment Configuration', () => {
 import { test, expect } from '@playwright/test'
 
 test.describe('US-001 / US-003 — Homepage baseline', () => {
-
   test('AC-001-3 / AC-003-1: GET / returns HTTP 200', async ({ page }) => {
     const response = await page.goto('/')
     expect(response?.status()).toBe(200)
@@ -360,7 +351,6 @@ test.describe('US-001 / US-003 — Homepage baseline', () => {
     // shadcn Button uses 'inline-flex' in its base class
     await expect(button).toHaveClass(/inline-flex/)
   })
-
 })
 ```
 
@@ -374,11 +364,13 @@ test.describe('US-001 / US-003 — Homepage baseline', () => {
 
 **AC**: AC-001-3  
 **Files to create/modify**:
+
 - `components.json` (created by `npx shadcn@latest init`)
 - `components/ui/button.tsx` (added by `npx shadcn@latest add button`)
 - `app/page.tsx` — add `<Button>Hello InnovatEPAM</Button>` to verify render
 
 **Commands**:
+
 ```bash
 npx shadcn@latest init
 # Select: style=default, color=slate, CSS variables=yes, tailwind.config=no (v4 uses CSS)
@@ -393,11 +385,13 @@ npx shadcn@latest add button
 
 **AC**: AC-001-4  
 **Files to create/modify**:
+
 - `.prettierrc` (create): `{ "semi": false, "singleQuote": true, "tabWidth": 2, "trailingComma": "es5" }`
 - `.prettierignore` (create): `node_modules .next lib/generated`
 - `package.json` (modify): add `devDependencies`, `lint-staged`, `prepare` script
 
 **Commands**:
+
 ```bash
 npm install --save-dev prettier lint-staged
 npx husky init
@@ -405,6 +399,7 @@ echo "npx lint-staged" > .husky/pre-commit
 ```
 
 **`package.json` additions**:
+
 ```json
 {
   "lint-staged": {
@@ -420,12 +415,14 @@ echo "npx lint-staged" > .husky/pre-commit
 
 **AC**: AC-001-1, AC-001-2  
 **This is a verification task — no file creation.** Run:
+
 ```bash
 npm run build    # must exit 0, zero TypeScript errors
 npm run lint     # must exit 0, zero warnings
 ```
 
 Fix any ESLint errors introduced by shadcn/ui components. Common issues:
+
 - `@typescript-eslint/no-unused-vars` on shadcn helper types → add to eslint ignore
 - `react/display-name` on forwarded refs → add display name
 
@@ -437,6 +434,7 @@ Fix any ESLint errors introduced by shadcn/ui components. Common issues:
 
 **AC**: AC-002-1  
 **Files to modify**:
+
 - `prisma/schema.prisma`
 
 **Schema additions** (append after `VerificationToken` model):
@@ -490,6 +488,7 @@ model IdeaReview {
 ```
 
 **User model additions** (add relations to existing `User` model):
+
 ```prisma
 // Add inside model User { ... }
 ideas   Idea[]       @relation
@@ -502,6 +501,7 @@ reviews IdeaReview[] @relation("ReviewedBy")
 
 **AC**: AC-002-1  
 **Command**:
+
 ```bash
 npx prisma generate
 ```
@@ -522,6 +522,7 @@ npx prisma migrate dev --name init
 
 **Expected**: Creates `User`, `VerificationToken`, `Idea`, `IdeaReview` tables in PostgreSQL.  
 **Verify via Prisma Studio**:
+
 ```bash
 npx prisma studio
 # Confirm: users, verification_tokens, ideas, idea_reviews tables visible
@@ -576,6 +577,7 @@ FEATURE_ANALYTICS_ENABLED=false           # Enables /admin/analytics (future)
 **File to inspect/modify**: `.gitignore`
 
 Next.js default `.gitignore` includes `.env*.local` — verify this pattern is present. If missing, add:
+
 ```
 # local env files
 .env*.local
@@ -591,6 +593,7 @@ Run `git status` to confirm `.env.local` does not appear as a tracked file.
 **This is an operational task, not a code change.**
 
 Steps:
+
 1. Connect GitHub repo to Vercel (Vercel dashboard → Import project)
 2. Set all environment variables in Vercel dashboard (from `.env.example` list)
 3. Set `DIRECT_URL` = Neon direct connection string (no PgBouncer suffix)
@@ -599,6 +602,7 @@ Steps:
 6. Verify: production URL returns HTTP 200 on `GET /`
 
 **Vercel-specific notes**:
+
 - `NEXTAUTH_URL` must match the Vercel deployment URL (update after first deploy)
 - Set `NODE_ENV=production` automatically by Vercel — no manual action needed
 - Add `prisma generate` to Vercel build step if not already in `next.config.ts`
@@ -607,19 +611,19 @@ Steps:
 
 ## 5. AC → Task Traceability Matrix
 
-| AC ID | Story | Task(s) |
-|---|---|---|
-| AC-001-1 | US-001 | T-E01-003 (build gate) |
-| AC-001-2 | US-001 | T-E01-003 (lint gate) |
-| AC-001-3 | US-001 | T-E01-001 (shadcn/ui install + Button on `/`) |
-| AC-001-4 | US-001 | T-E01-002 (.prettierrc + lint-staged + husky) |
+| AC ID    | Story  | Task(s)                                                         |
+| -------- | ------ | --------------------------------------------------------------- |
+| AC-001-1 | US-001 | T-E01-003 (build gate)                                          |
+| AC-001-2 | US-001 | T-E01-003 (lint gate)                                           |
+| AC-001-3 | US-001 | T-E01-001 (shadcn/ui install + Button on `/`)                   |
+| AC-001-4 | US-001 | T-E01-002 (.prettierrc + lint-staged + husky)                   |
 | AC-002-1 | US-002 | T-E01-004 (schema) + T-E01-005 (generate) + T-E01-006 (migrate) |
-| AC-002-2 | US-002 | T-E01-006 (Prisma Studio verification) |
-| AC-002-3 | US-002 | T-E01-006 (live connectivity test — integration flag) |
-| AC-003-1 | US-003 | T-E01-007 (env vars) + T-E01-008 (gitignore) |
-| AC-003-2 | US-003 | T-E01-009 (Vercel deployment) |
-| AC-003-3 | US-003 | T-E01-007 (.env.example audit) |
-| AC-003-4 | US-003 | T-E01-008 (.gitignore verification) |
+| AC-002-2 | US-002 | T-E01-006 (Prisma Studio verification)                          |
+| AC-002-3 | US-002 | T-E01-006 (live connectivity test — integration flag)           |
+| AC-003-1 | US-003 | T-E01-007 (env vars) + T-E01-008 (gitignore)                    |
+| AC-003-2 | US-003 | T-E01-009 (Vercel deployment)                                   |
+| AC-003-3 | US-003 | T-E01-007 (.env.example audit)                                  |
+| AC-003-4 | US-003 | T-E01-008 (.gitignore verification)                             |
 
 ---
 
@@ -628,6 +632,7 @@ Steps:
 All items must be ✅ before EPIC-01 is closed:
 
 ### US-001 DoD
+
 - [ ] `npm run build` exits 0, zero TypeScript errors, zero Next.js warnings
 - [ ] `npm run lint` exits 0, zero errors/warnings
 - [ ] `components/ui/button.tsx` present; `Button` renders on `/`
@@ -636,6 +641,7 @@ All items must be ✅ before EPIC-01 is closed:
 - [ ] `git log` shows commit: `chore: initialize Next.js 15 project`
 
 ### US-002 DoD
+
 - [ ] `prisma/schema.prisma` has `User`, `Idea`, `IdeaReview`, `VerificationToken` models
 - [ ] `IdeaStatus` and `IdeaVisibility` enums present in schema
 - [ ] `lib/generated/prisma/` reflects all new models after `prisma generate`
@@ -645,6 +651,7 @@ All items must be ✅ before EPIC-01 is closed:
 - [ ] `git commit: feat(db): add initial prisma schema`
 
 ### US-003 DoD
+
 - [ ] `.env.example` has all 11 variables with descriptive comments
 - [ ] `.env.local` does NOT appear in `git status`
 - [ ] `.gitignore` contains `.env*.local` or `.env.local`
@@ -681,15 +688,67 @@ All items must be ✅ before EPIC-01 is closed:
 
 ## 8. Assumptions & Constraints
 
-| Assumption | Justification |
-|---|---|
-| `VerificationToken` stays as a separate model (not inline on `User`) | EPIC-02 clarification Q2 resolved this; separate model gives cleaner TTL management |
-| shadcn/ui v4-compatible with Tailwind v4 CSS-first config | Check release notes; if conflict, pin shadcn to latest stable and resolve in T-E01-001 |
-| Vercel account + GitHub repo connection exist | US-003 pre-requisite; external blocker if not ready |
-| Real Neon DB credentials available for T-E01-006 | Integration tests gated behind `INTEGRATION=true` to allow offline unit testing |
-| `npm run test:coverage` threshold is ≥80% line coverage | From `vitest.config.ts` — epic-01 tests should contribute to this without dropping below threshold |
-| `.prettierrc` format aligns with existing ESLint config | If conflicts arise (semi/quote rules), defer to ESLint — mark prettier as formatter, not linter |
+| Assumption                                                           | Justification                                                                                      |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `VerificationToken` stays as a separate model (not inline on `User`) | EPIC-02 clarification Q2 resolved this; separate model gives cleaner TTL management                |
+| shadcn/ui v4-compatible with Tailwind v4 CSS-first config            | Check release notes; if conflict, pin shadcn to latest stable and resolve in T-E01-001             |
+| Vercel account + GitHub repo connection exist                        | US-003 pre-requisite; external blocker if not ready                                                |
+| Real Neon DB credentials available for T-E01-006                     | Integration tests gated behind `INTEGRATION=true` to allow offline unit testing                    |
+| `npm run test:coverage` threshold is ≥80% line coverage              | From `vitest.config.ts` — epic-01 tests should contribute to this without dropping below threshold |
+| `.prettierrc` format aligns with existing ESLint config              | If conflicts arise (semi/quote rules), defer to ESLint — mark prettier as formatter, not linter    |
 
 ---
 
-*Generated by `speckit.specify` · v1.0 · 2026-02-24*
+_Generated by `speckit.specify` · v1.0 · 2026-02-24_
+
+---
+
+## Spec File Index — V1.0 (Phase 1 MVP)
+
+### PRD
+
+- [specs/prd-innovatepam.md](../../specs/prd-innovatepam.md)
+
+### Epics
+
+- [EPIC-01 Foundation](../../specs/epics/EPIC-01-foundation.md)
+- [EPIC-02 Auth & Roles](../../specs/epics/EPIC-02-auth-roles.md)
+- [EPIC-03 Idea Submission](../../specs/epics/EPIC-03-idea-submission.md)
+- [EPIC-04 Evaluation & QA](../../specs/epics/EPIC-04-evaluation-qa.md)
+
+### User Stories
+
+**EPIC-01 Foundation (US-001–003)**
+
+- [US-001 Project scaffold](../../specs/stories/epic-01/US-001-project-scaffold.md)
+- [US-002 Database & Prisma setup](../../specs/stories/epic-01/US-002-database-prisma-setup.md)
+- [US-003 Env config & Vercel deploy](../../specs/stories/epic-01/US-003-env-config-vercel-deploy.md)
+
+**EPIC-02 Auth & Roles (US-004–007)**
+
+- [US-004 User registration](../../specs/stories/epic-02/US-004-user-registration.md)
+- [US-005 Email verification](../../specs/stories/epic-02/US-005-email-verification.md)
+- [US-006 Login / logout](../../specs/stories/epic-02/US-006-login-logout.md)
+- [US-007 Route protection & RBAC](../../specs/stories/epic-02/US-007-route-protection-rbac.md)
+
+**EPIC-03 Idea Submission (US-008–011)**
+
+- [US-008 Submit idea form](../../specs/stories/epic-03/US-008-submit-idea-form.md)
+- [US-009 Idea list page](../../specs/stories/epic-03/US-009-idea-list-page.md)
+- [US-010 Idea detail page](../../specs/stories/epic-03/US-010-idea-detail-page.md)
+- [US-011 My ideas page](../../specs/stories/epic-03/US-011-my-ideas-page.md)
+
+**EPIC-04 Evaluation & QA (US-012–016)**
+
+- [US-012 Evaluation workflow](../../specs/stories/epic-04/US-012-evaluation-workflow.md)
+- [US-013 Admin dashboard](../../specs/stories/epic-04/US-013-admin-dashboard.md)
+- [US-014 Analytics page](../../specs/stories/epic-04/US-014-analytics-page.md)
+- [US-015 Profile & settings](../../specs/stories/epic-04/US-015-profile-settings.md)
+- [US-016 Test suite & QA gate](../../specs/stories/epic-04/US-016-test-suite-qa-gate.md)
+
+### Sprint Spec Folders
+
+- [specs/001-foundation/](../../specs/001-foundation/)
+- [specs/001-auth-rbac/](../../specs/001-auth-rbac/)
+- [specs/002-idea-submission/](../../specs/002-idea-submission/)
+- [specs/003-evaluation-qa/](../../specs/003-evaluation-qa/)

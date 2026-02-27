@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable}`} suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning style={{ backgroundColor: '#060608', color: '#F0F0FA' }}>
         <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
